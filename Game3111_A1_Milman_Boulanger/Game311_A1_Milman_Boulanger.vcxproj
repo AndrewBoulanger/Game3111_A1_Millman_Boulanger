@@ -146,36 +146,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\Camera.cpp" />
-    <ClCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\d3dApp.cpp" />
-    <ClCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\d3dUtil.cpp" />
-    <ClCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\DDSTextureLoader.cpp" />
-    <ClCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\GameTimer.cpp" />
-    <ClCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\GeometryGenerator.cpp" />
-    <ClCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\MathHelper.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="d3dApp.cpp" />
+    <ClCompile Include="d3dUtil.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="FrameResource.cpp" />
+    <ClCompile Include="GameTimer.cpp" />
+    <ClCompile Include="GeometryGenerator.cpp" />
+    <ClCompile Include="MathHelper.cpp" />
     <ClCompile Include="Week4-1-ShapesAppUsingDescriptorTable.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\Camera.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\d3dApp.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\d3dUtil.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\d3dx12.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\DDSTextureLoader.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\GameTimer.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\GeometryGenerator.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\MathHelper.h" />
-    <ClInclude Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Common\UploadBuffer.h" />
-    <ClInclude Include="FrameResource.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\color.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WinMain</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">WinMain</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VS</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VS</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </FxCompile>
@@ -199,6 +187,18 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="d3dApp.h" />
+    <ClInclude Include="d3dUtil.h" />
+    <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="DDSTextureLoader.h" />
+    <ClInclude Include="FrameResource.h" />
+    <ClInclude Include="GameTimer.h" />
+    <ClInclude Include="GeometryGenerator.h" />
+    <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

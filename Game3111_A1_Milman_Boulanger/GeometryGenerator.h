@@ -93,6 +93,13 @@ public:
     MeshData CreateGeosphere(float radius, uint32 numSubdivisions);
 
 	///<summary>
+/// Creates a cone centered about the origin.  
+/// bottom radius controls the width of the base
+// cylinders.  The slices and stacks parameters control the degree of tessellation.
+///</summary>
+	MeshData CreateCone(float bottomRadius, float height, uint32 sliceCount, uint32 stackCount);
+
+	///<summary>
 	/// Creates a cylinder parallel to the y-axis, and centered about the origin.  
 	/// The bottom and top radius can vary to form various cone shapes rather than true
 	// cylinders.  The slices and stacks parameters control the degree of tessellation.

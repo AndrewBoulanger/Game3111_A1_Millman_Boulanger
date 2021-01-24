@@ -547,7 +547,8 @@ void ShapesApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.5f, 0.5f, 1.5f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(20.0f, 30.0f, 60, 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
-	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
+	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 3.0f, 20, 20);
+	//GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 3.0f, 20, 20);
 
 	//
 	// We are concatenating all the geometry into one big vertex/index buffer.  So
