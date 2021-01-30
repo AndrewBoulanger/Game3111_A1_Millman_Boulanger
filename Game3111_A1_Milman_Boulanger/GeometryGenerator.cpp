@@ -379,6 +379,65 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGeosphere(float radius, uin
     return meshData;
 }
 
+GeometryGenerator::MeshData GeometryGenerator::CreateCone(float bottomRadius, float height, uint32 sliceCount)
+{
+	MeshData meshData;
+
+	// Compute vertices forthe bottom ring.
+	float y = -0.5f * height;
+	float r = bottomRadius;
+
+	// vertices of ring
+	float dTheta = 2.0f * XM_PI / sliceCount;
+	for (uint32 j = 0; j <= sliceCount; ++j)
+	{
+		Vertex vertex;
+
+		float c = cosf(j * dTheta);
+		float s = sinf(j * dTheta);
+
+		vertex.Position = XMFLOAT3(r * c, y, r * s);
+
+		vertex.TexC.x = (float)j / sliceCount;
+		vertex.TexC.y = 1.0f;
+
+		// This is unit length.
+		vertex.TangentU = XMFLOAT3(-s, 0.0f, c);
+
+		XMFLOAT3 bitangent(r * c, -height, r * s);
+
+		XMVECTOR T = XMLoadFloat3(&vertex.TangentU);
+		XMVECTOR B = XMLoadFloat3(&bitangent);
+		XMVECTOR N = XMVector3Normalize(XMVector3Cross(T, B));
+		XMStoreFloat3(&vertex.Normal, N);
+
+		meshData.Vertices.push_back(vertex);
+
+	}
+
+	// Add one because we duplicate the first and last vertex per ring
+	// since the texture coordinates are different.
+	uint32 ringVertexCount = sliceCount + 1;
+
+	// Compute indices 
+
+	for (uint32 j = 0; j < sliceCount; ++j)
+	{
+		meshData.Indices32.push_back(j);
+		meshData.Indices32.push_back(ringVertexCount + j);
+		meshData.Indices32.push_back(ringVertexCount + j + 1);
+
+		meshData.Indices32.push_back(j);
+		meshData.Indices32.push_back(ringVertexCount + j + 1);
+		meshData.Indices32.push_back(j + 1);
+	}
+
+
+	BuildCylinderTopCap(bottomRadius, 0.0, height, sliceCount, 1, meshData);
+	BuildCylinderBottomCap(bottomRadius, 0.0, height, sliceCount, 1, meshData);
+
+	return meshData;
+}
 GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount)
 {
     MeshData meshData;
