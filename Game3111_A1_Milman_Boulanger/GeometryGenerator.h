@@ -105,6 +105,11 @@ public:
 	// cylinders.  The slices and stacks parameters control the degree of tessellation.
 	///</summary>
     MeshData CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount);
+
+	///<summary>
+	//creates 2 conjoined cylinders with only 2 horizontal faces (the top and the pointed bottom, no hidden inner faces here). 
+	//Both cylinders share a middle radius, the bottom is an inverse cone.
+	//the bottom height can be set, independant of the top.
     MeshData CreateDiamond(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount);
 
 	///<summary>
@@ -119,8 +124,12 @@ public:
     MeshData CreateQuad(float x, float y, float w, float h, float depth);
 	void Subdivide(MeshData& meshData);
 
+	///<summary>
+	/// Creates a prism with 3 sides and triangular faces
+	///</summary>
 	MeshData CreateTriangularPrism(float baseWidth, float height, float depth);
 
+	MeshData CreatePyramid(float baseWidth, float height, float depth);
 
 private:
 	
