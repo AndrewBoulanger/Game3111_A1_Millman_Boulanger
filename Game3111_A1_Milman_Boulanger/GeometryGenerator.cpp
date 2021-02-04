@@ -274,6 +274,96 @@ void GeometryGenerator::Subdivide(MeshData& meshData)
 	}
 }
 
+GeometryGenerator::MeshData GeometryGenerator::CreateTriangularPrism(float baseWidth, float height, float depth)
+{
+	MeshData meshData;
+
+	//
+	// Create the vertices.
+	//
+
+	Vertex v[18];
+
+	float w2 = 0.5f * baseWidth;
+	float h2 = 0.5f * height;
+	float d2 = 0.5f * depth;
+
+	XMFLOAT3 tangent;
+	XMFLOAT3 normal;
+
+	XMVECTOR t = XMVectorSet(w2, height, 0.0f, 0.0f);
+	XMVECTOR d = { 0.0f,0.0f,1.0f };
+	t = XMVector3Normalize(t);
+	XMVECTOR n = XMVector3Cross(t, d);
+
+	XMStoreFloat3(&tangent,t);
+	XMStoreFloat3(&normal,n);
+
+	// Fill in the front face vertex data.
+	v[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[1] = Vertex(0.0f, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[2] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+
+	// Fill in the back face vertex data.
+	v[3] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[4] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[5] = Vertex(0.0f, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+	// Fill in the bottom face vertex data.
+	v[6] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[7] = Vertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[8] = Vertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[9] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+
+	// Fill in the left face vertex data.
+	v[10] = Vertex(-w2, -h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
+	v[11] = Vertex(0.0f, +h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
+	v[12] = Vertex(0.0f, +h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
+	v[13] = Vertex(-w2, -h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
+
+	// Fill in the right face vertex data.
+	v[14] = Vertex(+w2, -h2, -d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
+	v[15] = Vertex(0.0f, +h2, -d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
+	v[16] = Vertex(0.0f, +h2, +d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
+	v[17] = Vertex(+w2, -h2, +d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
+
+	meshData.Vertices.assign(&v[0], &v[18]);
+
+	//front face
+	meshData.Indices32.push_back(0);
+	meshData.Indices32.push_back(1);
+	meshData.Indices32.push_back(2);
+	//back face
+	meshData.Indices32.push_back(3);
+	meshData.Indices32.push_back(4);
+	meshData.Indices32.push_back(5);
+	//bottom face
+	meshData.Indices32.push_back(9);
+	meshData.Indices32.push_back(6);
+	meshData.Indices32.push_back(7);
+	meshData.Indices32.push_back(7);
+	meshData.Indices32.push_back(8);
+	meshData.Indices32.push_back(9);
+	//left face
+	meshData.Indices32.push_back(11);
+	meshData.Indices32.push_back(12);
+	meshData.Indices32.push_back(13);
+	meshData.Indices32.push_back(13);
+	meshData.Indices32.push_back(10);
+	meshData.Indices32.push_back(11);
+	//right face
+	meshData.Indices32.push_back(16);
+	meshData.Indices32.push_back(17);
+	meshData.Indices32.push_back(14);
+	meshData.Indices32.push_back(14);
+	meshData.Indices32.push_back(15);
+	meshData.Indices32.push_back(16);
+
+
+
+	return meshData;
+}
+
 GeometryGenerator::Vertex GeometryGenerator::MidPoint(const Vertex& v0, const Vertex& v1)
 {
     XMVECTOR p0 = XMLoadFloat3(&v0.Position);
@@ -530,6 +620,11 @@ GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius
 	BuildCylinderBottomCap(bottomRadius, topRadius, height, sliceCount, stackCount, meshData);
 
     return meshData;
+}
+
+GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount)
+{
+	return MeshData();
 }
 
 void GeometryGenerator::BuildCylinderTopCap(float bottomRadius, float topRadius, float height,
