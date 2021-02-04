@@ -554,6 +554,151 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGeosphere(float radius, uin
     return meshData;
 }
 
+GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, float ringRadius, uint32 sliceCount, uint32 stackCount)
+{
+	MeshData meshData;
+
+	//
+	// Compute the vertices stating at the top pole and moving down the stacks.
+	//
+
+	float phiStep = XM_PI / stackCount;
+	float thetaStep = 2.0f * XM_PI / sliceCount;
+
+	// Compute vertices for each stack ring. outer rings
+	for (uint32 i = 0; i <= stackCount - 1; ++i)
+	{
+		float phi = i * phiStep;
+
+		// Vertices of ring.
+		for (uint32 j = 0; j <= sliceCount; ++j)
+		{
+			float theta = j * thetaStep;
+
+			Vertex v;
+
+			float c = cosf(theta);
+			float s = sinf(theta);
+
+			// spherical to cartesian
+			v.Position.x = ringRadius * c + tubeRadius * sinf(phi) * c;
+			v.Position.y = tubeRadius * cosf(phi);
+			v.Position.z = ringRadius * s + tubeRadius * sinf(phi) * s;
+
+			// Partial derivative of P with respect to theta
+			v.TangentU.x = -tubeRadius * sinf(phi) * sinf(theta);
+			v.TangentU.y = 0.0f;
+			v.TangentU.z = tubeRadius * sinf(phi) * cosf(theta);
+
+			XMVECTOR T = XMLoadFloat3(&v.TangentU);
+			XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
+
+			XMVECTOR p = XMLoadFloat3(&v.Position);
+			XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+
+			v.TexC.x = theta / XM_2PI;
+			v.TexC.y = phi / XM_PI;
+
+			meshData.Vertices.push_back(v);
+		}
+	}
+
+	// Compute vertices for each stack ring. inner rings
+	for (uint32 i = 0; i <= stackCount - 1; ++i)
+	{
+		float phi = i * phiStep;
+
+		// Vertices of ring.
+		for (uint32 j = 0; j <= sliceCount; ++j)
+		{
+			float theta = j * thetaStep;
+
+			Vertex v;
+
+			float c = cosf(theta);
+			float s = sinf(theta);
+
+			// spherical to cartesian
+			v.Position.x = ringRadius * c - tubeRadius * sinf(phi) * c;
+			v.Position.y = tubeRadius * -cosf(phi);
+			v.Position.z = ringRadius * s - tubeRadius * sinf(phi) * s;
+
+			// Partial derivative of P with respect to theta
+			v.TangentU.x = -tubeRadius * sinf(phi) * s;
+			v.TangentU.y = 0.0f;
+			v.TangentU.z = +tubeRadius * sinf(phi) * c;
+
+			XMVECTOR T = XMLoadFloat3(&v.TangentU);
+			XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
+
+			XMVECTOR p = XMLoadFloat3(&v.Position);
+			XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+
+			v.TexC.x = theta / XM_2PI;
+			v.TexC.y = phi / XM_PI;
+
+			meshData.Vertices.push_back(v);
+		}
+	}
+
+	//
+	// Compute indices for top stack.  The top stack was written first to the vertex buffer
+	// and connects the top pole to the first ring.
+	//
+
+	//
+	// Compute indices for inner stacks (not connected to poles).
+	//
+
+	// Offset the indices to the index of the first vertex in the first ring.
+	// This is just skipping the top pole vertex.
+	uint32 baseIndex = 0;
+	uint32 ringVertexCount = sliceCount + 1 ;
+	for (uint32 i = 0; i < stackCount; ++i)
+	{
+		for (uint32 j = 0; j < sliceCount; ++j)
+		{
+			meshData.Indices32.push_back( i * ringVertexCount + j);
+			meshData.Indices32.push_back( i * ringVertexCount + j + 1);
+			meshData.Indices32.push_back( (i + 1) * ringVertexCount + j);
+
+			meshData.Indices32.push_back( (i + 1) * ringVertexCount + j);
+			meshData.Indices32.push_back( i * ringVertexCount + j + 1);
+			meshData.Indices32.push_back( (i + 1) * ringVertexCount + j + 1);
+		}
+	}
+
+	for (uint32 i = stackCount; i < stackCount * 2 -1  ; ++i)
+	{
+		for (uint32 j = 0; j < sliceCount; ++j)
+		{
+			meshData.Indices32.push_back( i * ringVertexCount + j);
+			meshData.Indices32.push_back( i * ringVertexCount + j + 1);
+			meshData.Indices32.push_back( (i + 1) * ringVertexCount + j);
+
+			meshData.Indices32.push_back( (i + 1) * ringVertexCount + j);
+			meshData.Indices32.push_back( i * ringVertexCount + j + 1);
+			meshData.Indices32.push_back( (i + 1) * ringVertexCount + j + 1);
+		}
+	}
+
+	uint32 lastStack = stackCount * 2-1 ;
+	for (uint32 j = 0; j < sliceCount ; ++j)
+	{
+		meshData.Indices32.push_back(lastStack * ringVertexCount + j);
+		meshData.Indices32.push_back(lastStack * ringVertexCount + j + 1);
+		meshData.Indices32.push_back( j);
+
+		meshData.Indices32.push_back( j);
+		meshData.Indices32.push_back(lastStack * ringVertexCount + j + 1);
+		meshData.Indices32.push_back( j+1);
+	}
+	
+
+	
+	return meshData;
+}
+
 GeometryGenerator::MeshData GeometryGenerator::CreateCone(float bottomRadius, float height, uint32 sliceCount)
 {
 	MeshData meshData;

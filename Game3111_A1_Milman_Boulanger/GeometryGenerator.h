@@ -93,6 +93,13 @@ public:
     MeshData CreateGeosphere(float radius, uint32 numSubdivisions);
 
 	///<summary>
+	/// Creates a donut centered at the origin with the given ring radius. 
+	/// The tube radius controls the thickness of the donut
+	/// The slices and stacks parameters control the degree of tessellation.
+	///</summary>
+	MeshData CreateTorus(float tubeRadius, float ringRadius, uint32 sliceCount, uint32 stackCount);
+
+	///<summary>
 	/// Creates a cone centered about the origin.  
 	/// bottom radius controls the width of the base
 	// cylinders.  The slices and stacks parameters control the degree of tessellation.
