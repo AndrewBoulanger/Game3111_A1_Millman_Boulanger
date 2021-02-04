@@ -105,7 +105,7 @@ public:
 	// cylinders.  The slices and stacks parameters control the degree of tessellation.
 	///</summary>
     MeshData CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount);
-    MeshData CreateCylinder(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount);
+    MeshData CreateDiamond(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount);
 
 	///<summary>
 	/// Creates an mxn grid in the xz-plane with m rows and n columns, centered
