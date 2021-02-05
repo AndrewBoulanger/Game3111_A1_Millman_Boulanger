@@ -580,7 +580,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 			float c = cosf(theta);
 			float s = sinf(theta);
 
-			// spherical to cartesian
+			// spherical to cartesian. combines the ring radius and the spherical curve of the donut
 			v.Position.x = ringRadius * c + tubeRadius * sinf(phi) * c;
 			v.Position.y = tubeRadius * cosf(phi);
 			v.Position.z = ringRadius * s + tubeRadius * sinf(phi) * s;
@@ -642,17 +642,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 	}
 
 	//
-	// Compute indices for top stack.  The top stack was written first to the vertex buffer
-	// and connects the top pole to the first ring.
-	//
-
-	//
-	// Compute indices for inner stacks (not connected to poles).
-	//
-
-	// Offset the indices to the index of the first vertex in the first ring.
-	// This is just skipping the top pole vertex.
-	uint32 baseIndex = 0;
+	// Compute indices for outer stacks, ring vertex count used to loop back around to the first vertices in the ring
 	uint32 ringVertexCount = sliceCount + 1 ;
 	for (uint32 i = 0; i < stackCount; ++i)
 	{
@@ -668,6 +658,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 		}
 	}
 
+	//compute indeces for the inner stacks, except for the last
 	for (uint32 i = stackCount; i < stackCount * 2 -1  ; ++i)
 	{
 		for (uint32 j = 0; j < sliceCount; ++j)
@@ -682,6 +673,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 		}
 	}
 
+	//connect the last stack to the first
 	uint32 lastStack = stackCount * 2-1 ;
 	for (uint32 j = 0; j < sliceCount ; ++j)
 	{
@@ -693,8 +685,6 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 		meshData.Indices32.push_back(lastStack * ringVertexCount + j + 1);
 		meshData.Indices32.push_back( j+1);
 	}
-	
-
 	
 	return meshData;
 }
