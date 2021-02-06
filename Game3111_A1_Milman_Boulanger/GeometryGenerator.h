@@ -105,6 +105,8 @@ public:
 	// cylinders.  The slices and stacks parameters control the degree of tessellation.
 	///</summary>
 	MeshData CreateCone(float bottomRadius, float height, uint32 sliceCount);
+	MeshData CreateWedge(float width, float height, float depth);
+
 
 	///<summary>
 	/// Creates a cylinder parallel to the y-axis, and centered about the origin.  

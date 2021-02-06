@@ -555,6 +555,7 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator::MeshData diamond = geoGen.CreateDiamond(1, 0.7f, 0.3, 1, 6);
     GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(1, 1, 1 );
     GeometryGenerator::MeshData torus = geoGen.CreateTorus(0.3f, 2.0f, 20, 20);
+    GeometryGenerator::MeshData wedge = geoGen.CreateWedge(1.0f, 1.0f, 2.0f);
 
 	//
 	// We are concatenating all the geometry into one big vertex/index buffer.  So
@@ -571,6 +572,7 @@ void ShapesApp::BuildShapeGeometry()
     UINT diamondVertexOffset = triPrismVertexOffset + (UINT)triPrism.Vertices.size();
     UINT pyramidVertexOffset = diamondVertexOffset + (UINT)diamond.Vertices.size();
     UINT torusVertexOffset = pyramidVertexOffset + (UINT)pyramid.Vertices.size();
+    UINT WedgeVertexOffset = torusVertexOffset + (UINT)torus.Vertices.size();
 
 	// Cache the starting index for each object in the concatenated index buffer.
 	UINT boxIndexOffset = 0;
@@ -582,7 +584,7 @@ void ShapesApp::BuildShapeGeometry()
     UINT diamondIndexOffset = triPrismIndexOffset + (UINT)triPrism.Indices32.size();
     UINT pyramidIndexOffset = diamondIndexOffset + (UINT)diamond.Indices32.size();
     UINT torusIndexOffset = pyramidIndexOffset + (UINT)pyramid.Indices32.size();
-
+    UINT WedgeIndexOffset = torusIndexOffset + (UINT)torus.Indices32.size();
     // Define the SubmeshGeometry that cover different 
     // regions of the vertex/index buffers.
 
@@ -590,6 +592,11 @@ void ShapesApp::BuildShapeGeometry()
 	boxSubmesh.IndexCount = (UINT)box.Indices32.size();
 	boxSubmesh.StartIndexLocation = boxIndexOffset;
 	boxSubmesh.BaseVertexLocation = boxVertexOffset;
+
+    SubmeshGeometry wedgeSubmesh;
+    wedgeSubmesh.IndexCount = (UINT)wedge.Indices32.size();
+    wedgeSubmesh.StartIndexLocation = WedgeIndexOffset;
+    wedgeSubmesh.BaseVertexLocation = WedgeVertexOffset;
 
 	SubmeshGeometry gridSubmesh;
 	gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
@@ -645,7 +652,8 @@ void ShapesApp::BuildShapeGeometry()
         triPrism.Vertices.size() +
         diamond.Vertices.size() +
         pyramid.Vertices.size() +
-        torus.Vertices.size();
+        torus.Vertices.size() +
+        wedge.Vertices.size();
 
 	std::vector<Vertex> vertices(totalVertexCount);
 
@@ -703,6 +711,11 @@ void ShapesApp::BuildShapeGeometry()
         vertices[k].Pos = torus.Vertices[i].Position;
         vertices[k].Color = XMFLOAT4(DirectX::Colors::Gold);
     }
+     for (size_t i = 0; i < wedge.Vertices.size(); ++i, ++k)
+     {
+         vertices[k].Pos = wedge.Vertices[i].Position;
+         vertices[k].Color = XMFLOAT4(DirectX::Colors::Gold);
+     }
 
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
@@ -714,6 +727,7 @@ void ShapesApp::BuildShapeGeometry()
 	indices.insert(indices.end(), std::begin(diamond.GetIndices16()), std::end(diamond.GetIndices16()));
 	indices.insert(indices.end(), std::begin(pyramid.GetIndices16()), std::end(pyramid.GetIndices16()));
 	indices.insert(indices.end(), std::begin(torus.GetIndices16()), std::end(torus.GetIndices16()));
+    indices.insert(indices.end(), std::begin(wedge.GetIndices16()), std::end(wedge.GetIndices16()));
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size()  * sizeof(std::uint16_t);
@@ -747,6 +761,7 @@ void ShapesApp::BuildShapeGeometry()
 	geo->DrawArgs["diamond"] = diamondSubmesh;
 	geo->DrawArgs["pyramid"] = pyramidSubmesh;
 	geo->DrawArgs["torus"] = torusSubmesh;
+    geo->DrawArgs["wedge"] = wedgeSubmesh;
 
 	mGeometries[geo->Name] = std::move(geo);
 }
@@ -945,7 +960,17 @@ void ShapesApp::BuildRenderItems()
     torusRitem->IndexCount = torusRitem->Geo->DrawArgs["torus"].IndexCount;
     torusRitem->StartIndexLocation = torusRitem->Geo->DrawArgs["torus"].StartIndexLocation;
     torusRitem->BaseVertexLocation = torusRitem->Geo->DrawArgs["torus"].BaseVertexLocation;
-    mAllRitems.push_back(std::move(torusRitem));
+    mAllRitems.push_back(std::move(torusRitem)); 
+    
+    auto wedgeRitem = std::make_unique<RenderItem>();
+    XMStoreFloat4x4(&wedgeRitem->World, XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationX(0) * XMMatrixTranslation(-3.0f, 2.75f, 0.0f));
+    wedgeRitem->ObjCBIndex = objCBIndex++;
+    wedgeRitem->Geo = mGeometries["shapeGeo"].get();
+    wedgeRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    wedgeRitem->IndexCount = wedgeRitem->Geo->DrawArgs["wedge"].IndexCount;
+    wedgeRitem->StartIndexLocation = wedgeRitem->Geo->DrawArgs["wedge"].StartIndexLocation;
+    wedgeRitem->BaseVertexLocation = wedgeRitem->Geo->DrawArgs["wedge"].BaseVertexLocation;
+    mAllRitems.push_back(std::move(wedgeRitem));
 
 	// All the render items are opaque.
 	for(auto& e : mAllRitems)
