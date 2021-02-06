@@ -911,6 +911,51 @@ void ShapesApp::BuildRenderItems()
 		mAllRitems.push_back(std::move(flagRitem));
 	}
 
+    for (int i = 0; i < 4; i++)
+    {
+        float theta = i * thetaSquareStep;
+        float sRadius = w2 * sinf(theta);
+        float cRadius = w2 * cosf(theta);
+
+        //the three identical castle walls
+        if (i < 3)
+        {
+            auto boxRitem = std::make_unique<RenderItem>();
+            XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(1.0f, 10.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 5.0f, sRadius));
+            boxRitem->ObjCBIndex = objCBIndex++;;
+            boxRitem->Geo = mGeometries["shapeGeo"].get();
+            boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+            boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
+            boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
+            boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
+            mAllRitems.push_back(std::move(boxRitem));
+        }
+        //the prism along the top of the walls
+        auto prismRitem = std::make_unique<RenderItem>();
+        XMStoreFloat4x4(&prismRitem->World, XMMatrixScaling(1.0f, 1.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius));
+        prismRitem->ObjCBIndex = objCBIndex++;
+        prismRitem->Geo = mGeometries["shapeGeo"].get();
+        prismRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        prismRitem->IndexCount = prismRitem->Geo->DrawArgs["prism"].IndexCount;
+        prismRitem->StartIndexLocation = prismRitem->Geo->DrawArgs["prism"].StartIndexLocation;
+        prismRitem->BaseVertexLocation = prismRitem->Geo->DrawArgs["prism"].BaseVertexLocation;
+        mAllRitems.push_back(std::move(prismRitem));
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        auto boxRitem = std::make_unique<RenderItem>();
+        XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(20.0f, 10.0f, 1.0f) * XMMatrixTranslation(-13.0f + i * 26.0f, 5.0f, -25.0f));
+        boxRitem->ObjCBIndex = objCBIndex++;;
+        boxRitem->Geo = mGeometries["shapeGeo"].get();
+        boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
+        boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
+        boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
+        mAllRitems.push_back(std::move(boxRitem));
+    }
+
+
     auto coneRitem = std::make_unique<RenderItem>();
     XMStoreFloat4x4(&coneRitem->World, XMMatrixScaling(2.0f, 2.0f, 2.0f) * XMMatrixTranslation(10.0f, 2.5f, 0.0f));
     coneRitem->ObjCBIndex = objCBIndex++;
