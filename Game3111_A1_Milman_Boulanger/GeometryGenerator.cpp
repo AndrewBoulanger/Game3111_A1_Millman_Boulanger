@@ -303,10 +303,52 @@ GeometryGenerator::MeshData GeometryGenerator::CreateSphere(float radius, uint32
 
     return meshData;
 }
-GeometryGenerator::MeshData GeometryGenerator::CreateHalfSphere(float radius, uint32 sliceCount, uint32 stackCount)
+GeometryGenerator::MeshData GeometryGenerator::CreateHalfSphere(float radius,  uint32 sliceCount, uint32 stackCount)
 {
     MeshData meshData;
+	//Vertex v2[24];
 
+	//float w2 = 0.5f * width;
+	//float h2 = 0.5f * height;
+	//float d2 = 0.5f * depth;
+
+	//// Fill in the front face vertex data.
+	//v2[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	//v2[1] = Vertex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	//v2[2] = Vertex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	//v2[3] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	// 
+	///*back face vertex data.*/
+	//v2[4] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	//v2[5] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	//v2[6] = Vertex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	//v2[7] = Vertex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	// 
+	///*top face vertex data.*/
+	//v2[8] = Vertex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	//v2[9] = Vertex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	//v2[10] = Vertex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	//v2[11] = Vertex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	//
+	////bottom face vertex data.
+	//v2[12] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	//v2[13] = Vertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	//v2[14] = Vertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	//v2[15] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	// 
+	///*left face vertex data.*/
+	//v2[16] = Vertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
+	//v2[17] = Vertex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+	//v2[18] = Vertex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
+	//v2[19] = Vertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
+	// 
+	///*right face vertex data.*/
+	//v2[20] = Vertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+	//v2[21] = Vertex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+	//v2[22] = Vertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	//v2[23] = Vertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+
+	//meshData.Vertices.assign(&v2[0], &v2[24]);
 	//
 	// Compute the vertices stating at the top pole and moving down the stacks.
 	//
@@ -343,6 +385,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateHalfSphere(float radius, ui
 
 		meshData.Vertices.push_back(v);
 		theta += XM_PI / sliceCount;
+
 	}
 
 	for (int i = 0; i < sliceCount; i++)
@@ -368,6 +411,8 @@ GeometryGenerator::MeshData GeometryGenerator::CreateHalfSphere(float radius, ui
 		meshData.Vertices.push_back(v);
 		theta += XM_PI / sliceCount;
 	}
+
+
 	//}
 	//float phiStep = XM_PI / 2 * stackCount; //cut the stacks in half 
 	//float thetaStep = 2.0f * XM_PI / sliceCount;
@@ -415,6 +460,12 @@ GeometryGenerator::MeshData GeometryGenerator::CreateHalfSphere(float radius, ui
 
 
 	
+	for (uint32 i = 1; i <= sliceCount; ++i)
+	{
+		meshData.Indices32.push_back(0);
+		meshData.Indices32.push_back(i + 1);
+		meshData.Indices32.push_back(i);
+	}
 	for (uint32 i = 1; i <= sliceCount; ++i)
 	{
 		meshData.Indices32.push_back(0);

@@ -935,7 +935,7 @@ void ShapesApp::BuildRenderItems()
         float theta = i * thetaSquareStep;
         float sRadius = w2 * sinf(theta);
         float cRadius = w2 * cosf(theta);
-
+        float cremlonwidth = 1.0f;
         //the three identical castle walls
         if (i < 3)
         {
@@ -951,7 +951,7 @@ void ShapesApp::BuildRenderItems()
         }
         //the prism along the top of the walls
         auto prismRitem = std::make_unique<RenderItem>();
-        XMStoreFloat4x4(&prismRitem->World, XMMatrixScaling(1.0f, 1.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius));
+        XMStoreFloat4x4(&prismRitem->World, XMMatrixScaling(1.0f, 10.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius));
         prismRitem->ObjCBIndex = objCBIndex++;
         prismRitem->Geo = mGeometries["shapeGeo"].get();
         prismRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -959,6 +959,28 @@ void ShapesApp::BuildRenderItems()
         prismRitem->StartIndexLocation = prismRitem->Geo->DrawArgs["prism"].StartIndexLocation;
         prismRitem->BaseVertexLocation = prismRitem->Geo->DrawArgs["prism"].BaseVertexLocation;
         mAllRitems.push_back(std::move(prismRitem));
+
+        int mogulsNum = 50;
+        for (int j =0; j < mogulsNum; j++) {
+            if (j % 2 == 0)//similar as opengl 
+            {
+                auto boxRitem = std::make_unique<RenderItem>();
+                if (theta == XM_PI || theta == 0) {
+                    XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 1.0) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius , 15.5f, (sRadius-25) + j));
+                }
+                else {
+                    XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 1.0)* XMMatrixRotationY(theta)* XMMatrixTranslation((cRadius-25) + j, 15.5f, sRadius ));
+            }
+                    boxRitem->ObjCBIndex = objCBIndex++;
+                    boxRitem->Geo = mGeometries["shapeGeo"].get();
+                    boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                    boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
+                    boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
+                    boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
+                    mAllRitems.push_back(std::move(boxRitem));
+                }
+            }
+    
     }
 
     //smaller, front walls
