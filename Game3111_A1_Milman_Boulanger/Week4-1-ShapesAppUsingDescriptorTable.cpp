@@ -556,6 +556,8 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(1, 1, 1 );
     GeometryGenerator::MeshData torus = geoGen.CreateTorus(0.3f, 2.0f, 20, 20);
     GeometryGenerator::MeshData wedge = geoGen.CreateWedge(1.0f, 1.0f, 2.0f);
+    GeometryGenerator::MeshData halfsphere = geoGen.CreateHalfSphere(0.5f, 20, 20);
+
 
 	//
 	// We are concatenating all the geometry into one big vertex/index buffer.  So
@@ -572,8 +574,8 @@ void ShapesApp::BuildShapeGeometry()
     UINT diamondVertexOffset = triPrismVertexOffset + (UINT)triPrism.Vertices.size();
     UINT pyramidVertexOffset = diamondVertexOffset + (UINT)diamond.Vertices.size();
     UINT torusVertexOffset = pyramidVertexOffset + (UINT)pyramid.Vertices.size();
-    UINT WedgeVertexOffset = torusVertexOffset + (UINT)torus.Vertices.size();
-
+    UINT wedgeVertexOffset = torusVertexOffset + (UINT)torus.Vertices.size();
+    UINT halfsphereVertexOffset = wedgeVertexOffset + (UINT)wedge.Vertices.size();
 	// Cache the starting index for each object in the concatenated index buffer.
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
@@ -584,7 +586,8 @@ void ShapesApp::BuildShapeGeometry()
     UINT diamondIndexOffset = triPrismIndexOffset + (UINT)triPrism.Indices32.size();
     UINT pyramidIndexOffset = diamondIndexOffset + (UINT)diamond.Indices32.size();
     UINT torusIndexOffset = pyramidIndexOffset + (UINT)pyramid.Indices32.size();
-    UINT WedgeIndexOffset = torusIndexOffset + (UINT)torus.Indices32.size();
+    UINT wedgeIndexOffset = torusIndexOffset + (UINT)torus.Indices32.size();
+    UINT halfsphereIndexOffset = wedgeIndexOffset + (UINT)wedge.Indices32.size();
     // Define the SubmeshGeometry that cover different 
     // regions of the vertex/index buffers.
 
@@ -595,8 +598,8 @@ void ShapesApp::BuildShapeGeometry()
 
     SubmeshGeometry wedgeSubmesh;
     wedgeSubmesh.IndexCount = (UINT)wedge.Indices32.size();
-    wedgeSubmesh.StartIndexLocation = WedgeIndexOffset;
-    wedgeSubmesh.BaseVertexLocation = WedgeVertexOffset;
+    wedgeSubmesh.StartIndexLocation = wedgeIndexOffset;
+    wedgeSubmesh.BaseVertexLocation = wedgeVertexOffset;
 
 	SubmeshGeometry gridSubmesh;
 	gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
@@ -607,6 +610,11 @@ void ShapesApp::BuildShapeGeometry()
 	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
 	sphereSubmesh.StartIndexLocation = sphereIndexOffset;
 	sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
+
+    SubmeshGeometry halfsphereSubmesh;
+    halfsphereSubmesh.IndexCount = (UINT)halfsphere.Indices32.size();
+    halfsphereSubmesh.StartIndexLocation = halfsphereIndexOffset;
+    halfsphereSubmesh.BaseVertexLocation = halfsphereVertexOffset;
 
 	SubmeshGeometry cylinderSubmesh;
 	cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
@@ -653,7 +661,8 @@ void ShapesApp::BuildShapeGeometry()
         diamond.Vertices.size() +
         pyramid.Vertices.size() +
         torus.Vertices.size() +
-        wedge.Vertices.size();
+        wedge.Vertices.size() +
+        halfsphere.Vertices.size();
 
 	std::vector<Vertex> vertices(totalVertexCount);
 
@@ -716,6 +725,11 @@ void ShapesApp::BuildShapeGeometry()
          vertices[k].Pos = wedge.Vertices[i].Position;
          vertices[k].Color = XMFLOAT4(DirectX::Colors::Gold);
      }
+     for (size_t i = 0; i < halfsphere.Vertices.size(); ++i, ++k)
+     {
+         vertices[k].Pos = halfsphere.Vertices[i].Position;
+         vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
+     }
 
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
@@ -728,6 +742,7 @@ void ShapesApp::BuildShapeGeometry()
 	indices.insert(indices.end(), std::begin(pyramid.GetIndices16()), std::end(pyramid.GetIndices16()));
 	indices.insert(indices.end(), std::begin(torus.GetIndices16()), std::end(torus.GetIndices16()));
     indices.insert(indices.end(), std::begin(wedge.GetIndices16()), std::end(wedge.GetIndices16()));
+    indices.insert(indices.end(), std::begin(halfsphere.GetIndices16()), std::end(halfsphere.GetIndices16()));
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size()  * sizeof(std::uint16_t);
@@ -762,6 +777,7 @@ void ShapesApp::BuildShapeGeometry()
 	geo->DrawArgs["pyramid"] = pyramidSubmesh;
 	geo->DrawArgs["torus"] = torusSubmesh;
     geo->DrawArgs["wedge"] = wedgeSubmesh;
+    geo->DrawArgs["halfsphere"] = halfsphereSubmesh;
 
 	mGeometries[geo->Name] = std::move(geo);
 }
@@ -849,12 +865,14 @@ void ShapesApp::BuildRenderItems()
 		auto poleRitem = std::make_unique<RenderItem>();
 		auto sphereRitem = std::make_unique<RenderItem>();
 		auto flagRitem = std::make_unique<RenderItem>();
+        auto halfsphereRitem = std::make_unique<RenderItem>();
 
 		XMMATRIX towerWorld = XMMatrixScaling(6.0f, 7.0f, 6.0f) * XMMatrixTranslation(cRadius, 7.0f, sRadius); //keep in mind the base cylinder has a height of 2
 		XMMATRIX roofWorld = XMMatrixScaling(8.0f, 6.0f, 8.0f) * XMMatrixTranslation(cRadius, 17.0f, sRadius);
 		XMMATRIX poleWorld = XMMatrixScaling(0.2f, 2.0f, 0.2f) * XMMatrixTranslation(cRadius, 21.0f, sRadius);
 		XMMATRIX sphereWorld = XMMatrixScaling(0.3f, 0.3f, 0.3f) * XMMatrixTranslation(cRadius, 23.1f, sRadius);
 		XMMATRIX flagWorld = XMMatrixScaling(1.5f, 1.0f, 0.1f) * XMMatrixTranslation(cRadius - 1, 22.5f, sRadius);
+        XMMATRIX halfsphereWorld = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(cRadius, 25, sRadius);
 
 		XMStoreFloat4x4(&towerRitem->World, towerWorld);
 		towerRitem->ObjCBIndex = objCBIndex++;
@@ -880,13 +898,13 @@ void ShapesApp::BuildRenderItems()
 		poleRitem->StartIndexLocation = poleRitem->Geo->DrawArgs["cylinder"].StartIndexLocation;
 		poleRitem->BaseVertexLocation = poleRitem->Geo->DrawArgs["cylinder"].BaseVertexLocation;
 
-		XMStoreFloat4x4(&sphereRitem->World, sphereWorld);
-		sphereRitem->ObjCBIndex = objCBIndex++;
-		sphereRitem->Geo = mGeometries["shapeGeo"].get();
-		sphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		sphereRitem->IndexCount = sphereRitem->Geo->DrawArgs["sphere"].IndexCount;
-		sphereRitem->StartIndexLocation = sphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
-		sphereRitem->BaseVertexLocation = sphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
+		XMStoreFloat4x4(&halfsphereRitem->World, halfsphereWorld);
+		halfsphereRitem->ObjCBIndex = objCBIndex++;
+        halfsphereRitem->Geo = mGeometries["shapeGeo"].get();
+        halfsphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        halfsphereRitem->IndexCount = halfsphereRitem->Geo->DrawArgs["halfsphere"].IndexCount;
+        halfsphereRitem->StartIndexLocation = halfsphereRitem->Geo->DrawArgs["halfsphere"].StartIndexLocation;
+        halfsphereRitem->BaseVertexLocation = halfsphereRitem->Geo->DrawArgs["halfsphere"].BaseVertexLocation;
 
         XMStoreFloat4x4(&flagRitem->World, flagWorld);
        flagRitem->ObjCBIndex = objCBIndex++;
@@ -896,13 +914,21 @@ void ShapesApp::BuildRenderItems()
        flagRitem->StartIndexLocation = flagRitem->Geo->DrawArgs["box"].StartIndexLocation;
        flagRitem->BaseVertexLocation = flagRitem->Geo->DrawArgs["box"].BaseVertexLocation;
 
+       XMStoreFloat4x4(&sphereRitem->World, sphereWorld);
+       sphereRitem->ObjCBIndex = objCBIndex++;
+       sphereRitem->Geo = mGeometries["shapeGeo"].get();
+       sphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+       sphereRitem->IndexCount = sphereRitem->Geo->DrawArgs["sphere"].IndexCount;
+       sphereRitem->StartIndexLocation = sphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
+       sphereRitem->BaseVertexLocation = sphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
+
 		mAllRitems.push_back(std::move(towerRitem));
 		mAllRitems.push_back(std::move(roofRitem));
 		mAllRitems.push_back(std::move(poleRitem));
 		mAllRitems.push_back(std::move(sphereRitem));
 		mAllRitems.push_back(std::move(flagRitem));
+        mAllRitems.push_back(std::move(halfsphereRitem));
 	}
-
     //walls 
     for (int i = 0; i < 4; i++)
     {
