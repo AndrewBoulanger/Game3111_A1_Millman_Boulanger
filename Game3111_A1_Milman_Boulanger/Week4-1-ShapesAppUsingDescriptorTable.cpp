@@ -985,7 +985,7 @@ void ShapesApp::BuildRenderItems()
         sphereRitem->IndexCount = sphereRitem->Geo->DrawArgs["sphere"].IndexCount;
         sphereRitem->StartIndexLocation = sphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
         sphereRitem->BaseVertexLocation = sphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
-        XMStoreFloat4x4(&paleRitem->World, paleWorld);
+        XMStoreFloat4x4(&sphereRitem->World, sphereWorld);
 
 
 
@@ -994,7 +994,7 @@ void ShapesApp::BuildRenderItems()
         mAllRitems.push_back(std::move(poleRitem));
         mAllRitems.push_back(std::move(sphereRitem));
         mAllRitems.push_back(std::move(flagRitem));
-        mAllRitems.push_back(std::move(paleRitem));
+        //mAllRitems.push_back(std::move(paleRitem));
     }
    /* }*/
     //walls 
