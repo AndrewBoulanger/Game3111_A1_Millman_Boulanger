@@ -1,6 +1,8 @@
 ﻿//***************************************************************************************
 // ShapesApp.cpp 
 //
+// Assignment 1 by Andrew Boulanger 101 292 574 and Yaniv Milman 101 270 509
+//
 // Hold down '1' key to view scene in wireframe mode.
 //***************************************************************************************
 
@@ -934,10 +936,6 @@ void ShapesApp::BuildRenderItems()
         //adding the rooves seperately from the other tower components, since the last tower wont have one
         if (i < 3)
         {
-            float theta = i * thetaSquareStep + thetaSquareStep * 0.5;
-            float sRadius = radius * sinf(theta);
-            float cRadius = radius * cosf(theta);
-
             auto roofRitem = std::make_unique<RenderItem>();
             XMMATRIX roofWorld = XMMatrixScaling(8.0f, 6.0f, 8.0f) * XMMatrixTranslation(cRadius, 17.0f, sRadius);
             XMStoreFloat4x4(&roofRitem->World, roofWorld);
