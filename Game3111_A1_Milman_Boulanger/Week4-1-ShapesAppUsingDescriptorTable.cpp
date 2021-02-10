@@ -869,6 +869,8 @@ void ShapesApp::BuildFrameResources()
     }
 }
 
+//makes building render items simpler, reduces repeated chunks of code
+//the itemType is the key used to access the submesh
 void ShapesApp::SetRenderItemInfo(RenderItem &Ritem, std::string itemType)
 {
     Ritem.ObjCBIndex = objCBIndex++;
