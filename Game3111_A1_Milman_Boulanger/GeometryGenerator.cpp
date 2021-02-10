@@ -303,179 +303,179 @@ GeometryGenerator::MeshData GeometryGenerator::CreateSphere(float radius, uint32
 
     return meshData;
 }
-GeometryGenerator::MeshData GeometryGenerator::CreateHalfSphere(float radius,  uint32 sliceCount, uint32 stackCount)
-{
-    MeshData meshData;
-	//Vertex v2[24];
-
-	//float w2 = 0.5f * width;
-	//float h2 = 0.5f * height;
-	//float d2 = 0.5f * depth;
-
-	//// Fill in the front face vertex data.
-	//v2[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	//v2[1] = Vertex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	//v2[2] = Vertex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	//v2[3] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	// 
-	///*back face vertex data.*/
-	//v2[4] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	//v2[5] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	//v2[6] = Vertex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	//v2[7] = Vertex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	// 
-	///*top face vertex data.*/
-	//v2[8] = Vertex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	//v2[9] = Vertex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	//v2[10] = Vertex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	//v2[11] = Vertex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	//
-	////bottom face vertex data.
-	//v2[12] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	//v2[13] = Vertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	//v2[14] = Vertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	//v2[15] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	// 
-	///*left face vertex data.*/
-	//v2[16] = Vertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
-	//v2[17] = Vertex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
-	//v2[18] = Vertex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
-	//v2[19] = Vertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
-	// 
-	///*right face vertex data.*/
-	//v2[20] = Vertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
-	//v2[21] = Vertex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
-	//v2[22] = Vertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
-	//v2[23] = Vertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
-
-	//meshData.Vertices.assign(&v2[0], &v2[24]);
-	//
-	// Compute the vertices stating at the top pole and moving down the stacks.
-	//
-
-	// Poles: note that there will be texture coordinate distortion as there is
-	// not a unique point on the texture map to assign to the pole when mapping
-	// a rectangular texture onto a sphere.
-	Vertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	Vertex bottomVertex(0.0f,0, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f); //midpoint of circle bottom face 
-
-	float X = 0, Z = 0, theta = 0;
-	// Circle vertices in middle
-	
-	
-	for (int i = 0; i < sliceCount; i++)
-	{
-		//meshData.Vertices.push_back(Vertex(X + radius * cos(theta), 0, Z + radius * sin(theta), 0, 0, 0, 0, 0, 0, 0, 0));
-		Vertex v;
-
-		// spherical to cartesian
-		v.Position.x = X + radius * cos(theta);
-		v.Position.y = Z + radius * sin(theta);
-		v.Position.z = 0;
-
-		v.TangentU.x = X + radius * cos(theta);
-		v.TangentU.y = Z + radius * sin(theta);
-		v.TangentU.z = 0;
-
-		XMVECTOR T = XMLoadFloat3(&v.TangentU);
-		XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
-
-		XMVECTOR p = XMLoadFloat3(&v.Position);
-		XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
-
-		meshData.Vertices.push_back(v);
-		theta += XM_PI / sliceCount;
-
-	}
-
-	for (int i = 0; i < sliceCount; i++)
-	{
-		//meshData.Vertices.push_back(Vertex(X + radius * cos(theta), 0, Z + radius * sin(theta), 0, 0, 0, 0, 0, 0, 0, 0));
-		Vertex v;
-
-		// spherical to cartesian
-		v.Position.x = X + radius * cos(theta);
-		v.Position.y = Z + radius * sin(theta);
-		v.Position.z = 0;
-
-		v.TangentU.x = X + radius * cos(theta);
-		v.TangentU.y = Z + radius * sin(theta);
-		v.TangentU.z = 0;
-
-		XMVECTOR T = XMLoadFloat3(&v.TangentU);
-		XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
-
-		XMVECTOR p = XMLoadFloat3(&v.Position);
-		XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
-
-		meshData.Vertices.push_back(v);
-		theta += XM_PI / sliceCount;
-	}
-
-
-	//}
-	//float phiStep = XM_PI / 2 * stackCount; //cut the stacks in half 
-	//float thetaStep = 2.0f * XM_PI / sliceCount;
-	//
-	//for (uint32 i = 1; i <= stackCount - 1; ++i)
-	//{
-	//	float phi = i * phiStep;
-
-	//	// Vertices of ring.
-	//	for (uint32 j = 0; j <= sliceCount; ++j)
-	//	{
-	//		float theta = j * thetaStep;
-
-	//		Vertex v;
-
-	//		// spherical to cartesian
-	//		v.Position.x = radius * sinf(phi) * cosf(theta);
-	//		v.Position.z = radius * cosf(phi);
-	//		v.Position.y = radius * sinf(phi) * sinf(theta);
-
-	//		// Partial derivative of P with respect to theta
-	//		v.TangentU.x = -radius * sinf(phi) * sinf(theta);
-	//		v.TangentU.z = 0.0f;
-	//		v.TangentU.y = +radius * sinf(phi) * cosf(theta);
-
-	//		XMVECTOR T = XMLoadFloat3(&v.TangentU);
-	//		XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
-
-	//		XMVECTOR p = XMLoadFloat3(&v.Position);
-	//		XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
-
-	//		v.TexC.x = theta / XM_2PI;
-	//		v.TexC.y = phi / XM_PI;
-
-	//		meshData.Vertices.push_back(v);
-	//	}
-	//}
-
-	//meshData.Vertices.push_back(bottomVertex);
-
-	//
-	// Compute indices for top stack.  The top stack was written first to the vertex buffer
-	// and connects the top pole to the first ring.
-	//
-
-
-	
-	for (uint32 i = 1; i <= sliceCount; ++i)
-	{
-		meshData.Indices32.push_back(0);
-		meshData.Indices32.push_back(i + 1);
-		meshData.Indices32.push_back(i);
-	}
-	for (uint32 i = 1; i <= sliceCount; ++i)
-	{
-		meshData.Indices32.push_back(0);
-		meshData.Indices32.push_back(i + 1);
-		meshData.Indices32.push_back(i);
-	}
-	
-
-	return meshData;
-}
+//GeometryGenerator::MeshData GeometryGenerator::CreateHalfSphere(float radius,  uint32 sliceCount, uint32 stackCount)
+//{
+//    MeshData meshData;
+//	//Vertex v2[24];
+//
+//	//float w2 = 0.5f * width;
+//	//float h2 = 0.5f * height;
+//	//float d2 = 0.5f * depth;
+//
+//	//// Fill in the front face vertex data.
+//	//v2[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+//	//v2[1] = Vertex(-w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+//	//v2[2] = Vertex(+w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+//	//v2[3] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+//	// 
+//	///*back face vertex data.*/
+//	//v2[4] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+//	//v2[5] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+//	//v2[6] = Vertex(+w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+//	//v2[7] = Vertex(-w2, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+//	// 
+//	///*top face vertex data.*/
+//	//v2[8] = Vertex(-w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+//	//v2[9] = Vertex(-w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+//	//v2[10] = Vertex(+w2, +h2, +d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+//	//v2[11] = Vertex(+w2, +h2, -d2, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+//	//
+//	////bottom face vertex data.
+//	//v2[12] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+//	//v2[13] = Vertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+//	//v2[14] = Vertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+//	//v2[15] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+//	// 
+//	///*left face vertex data.*/
+//	//v2[16] = Vertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
+//	//v2[17] = Vertex(-w2, +h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+//	//v2[18] = Vertex(-w2, +h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f);
+//	//v2[19] = Vertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
+//	// 
+//	///*right face vertex data.*/
+//	//v2[20] = Vertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+//	//v2[21] = Vertex(+w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+//	//v2[22] = Vertex(+w2, +h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+//	//v2[23] = Vertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+//
+//	//meshData.Vertices.assign(&v2[0], &v2[24]);
+//	//
+//	// Compute the vertices stating at the top pole and moving down the stacks.
+//	//
+//
+//	// Poles: note that there will be texture coordinate distortion as there is
+//	// not a unique point on the texture map to assign to the pole when mapping
+//	// a rectangular texture onto a sphere.
+//	Vertex topVertex(0.0f, +radius, 0.0f, 0.0f, +1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+//	Vertex bottomVertex(0.0f,0, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f); //midpoint of circle bottom face 
+//
+//	float X = 0, Z = 0, theta = 0;
+//	// Circle vertices in middle
+//	
+//	
+//	for (int i = 0; i < sliceCount; i++)
+//	{
+//		//meshData.Vertices.push_back(Vertex(X + radius * cos(theta), 0, Z + radius * sin(theta), 0, 0, 0, 0, 0, 0, 0, 0));
+//		Vertex v;
+//
+//		// spherical to cartesian
+//		v.Position.x = X + radius * cos(theta);
+//		v.Position.y = Z + radius * sin(theta);
+//		v.Position.z = 0;
+//
+//		v.TangentU.x = X + radius * cos(theta);
+//		v.TangentU.y = Z + radius * sin(theta);
+//		v.TangentU.z = 0;
+//
+//		XMVECTOR T = XMLoadFloat3(&v.TangentU);
+//		XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
+//
+//		XMVECTOR p = XMLoadFloat3(&v.Position);
+//		XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+//
+//		meshData.Vertices.push_back(v);
+//		theta += XM_PI / sliceCount;
+//
+//	}
+//
+//	for (int i = 0; i < sliceCount; i++)
+//	{
+//		//meshData.Vertices.push_back(Vertex(X + radius * cos(theta), 0, Z + radius * sin(theta), 0, 0, 0, 0, 0, 0, 0, 0));
+//		Vertex v;
+//
+//		// spherical to cartesian
+//		v.Position.x = X + radius * cos(theta);
+//		v.Position.y = Z + radius * sin(theta);
+//		v.Position.z = 0;
+//
+//		v.TangentU.x = X + radius * cos(theta);
+//		v.TangentU.y = Z + radius * sin(theta);
+//		v.TangentU.z = 0;
+//
+//		XMVECTOR T = XMLoadFloat3(&v.TangentU);
+//		XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
+//
+//		XMVECTOR p = XMLoadFloat3(&v.Position);
+//		XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+//
+//		meshData.Vertices.push_back(v);
+//		theta += XM_PI / sliceCount;
+//	}
+//
+//
+//	//}
+//	//float phiStep = XM_PI / 2 * stackCount; //cut the stacks in half 
+//	//float thetaStep = 2.0f * XM_PI / sliceCount;
+//	//
+//	//for (uint32 i = 1; i <= stackCount - 1; ++i)
+//	//{
+//	//	float phi = i * phiStep;
+//
+//	//	// Vertices of ring.
+//	//	for (uint32 j = 0; j <= sliceCount; ++j)
+//	//	{
+//	//		float theta = j * thetaStep;
+//
+//	//		Vertex v;
+//
+//	//		// spherical to cartesian
+//	//		v.Position.x = radius * sinf(phi) * cosf(theta);
+//	//		v.Position.z = radius * cosf(phi);
+//	//		v.Position.y = radius * sinf(phi) * sinf(theta);
+//
+//	//		// Partial derivative of P with respect to theta
+//	//		v.TangentU.x = -radius * sinf(phi) * sinf(theta);
+//	//		v.TangentU.z = 0.0f;
+//	//		v.TangentU.y = +radius * sinf(phi) * cosf(theta);
+//
+//	//		XMVECTOR T = XMLoadFloat3(&v.TangentU);
+//	//		XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
+//
+//	//		XMVECTOR p = XMLoadFloat3(&v.Position);
+//	//		XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+//
+//	//		v.TexC.x = theta / XM_2PI;
+//	//		v.TexC.y = phi / XM_PI;
+//
+//	//		meshData.Vertices.push_back(v);
+//	//	}
+//	//}
+//
+//	//meshData.Vertices.push_back(bottomVertex);
+//
+//	//
+//	// Compute indices for top stack.  The top stack was written first to the vertex buffer
+//	// and connects the top pole to the first ring.
+//	//
+//
+//
+//	
+//	for (uint32 i = 1; i <= sliceCount; ++i)
+//	{
+//		meshData.Indices32.push_back(0);
+//		meshData.Indices32.push_back(i + 1);
+//		meshData.Indices32.push_back(i);
+//	}
+//	for (uint32 i = 1; i <= sliceCount; ++i)
+//	{
+//		meshData.Indices32.push_back(0);
+//		meshData.Indices32.push_back(i + 1);
+//		meshData.Indices32.push_back(i);
+//	}
+//	
+//
+//	return meshData;
+//}
  
 void GeometryGenerator::Subdivide(MeshData& meshData)
 {
