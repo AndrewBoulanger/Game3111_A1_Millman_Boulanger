@@ -567,13 +567,13 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTriangularPrism(float baseW
 
 	// Fill in the front face vertex data.
 	v[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[1] = Vertex(0.0f, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[2] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[1] = Vertex(0.0f, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.0f);
+	v[2] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	// Fill in the back face vertex data.
 	v[3] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 	v[4] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[5] = Vertex(0.0f, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[5] = Vertex(0.0f, +h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.5f);
 
 	// Fill in the bottom face vertex data.
 	v[6] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -582,16 +582,16 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTriangularPrism(float baseW
 	v[9] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the left face vertex data.
-	v[10] = Vertex(-w2, -h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
-	v[11] = Vertex(0.0f, +h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
-	v[12] = Vertex(0.0f, +h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
-	v[13] = Vertex(-w2, -h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
+	v[10] = Vertex(-w2, -h2, +d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 0.0f, 1.0f);
+	v[11] = Vertex(0.0f, +h2, +d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 0.0f, 0.0f);
+	v[12] = Vertex(0.0f, +h2, -d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 1.0f, 0.0f);
+	v[13] = Vertex(-w2, -h2, -d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 1.0f, 1.0f);
 
 	// Fill in the right face vertex data.
-	v[14] = Vertex(+w2, -h2, -d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
-	v[15] = Vertex(0.0f, +h2, -d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
-	v[16] = Vertex(0.0f, +h2, +d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
-	v[17] = Vertex(+w2, -h2, +d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
+	v[14] = Vertex(+w2, -h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
+	v[15] = Vertex(0.0f, +h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
+	v[16] = Vertex(0.0f, +h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
+	v[17] = Vertex(+w2, -h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
 
 	meshData.Vertices.assign(&v[0], &v[18]);
 
@@ -643,30 +643,39 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 	float d2 = 0.5f * depth;
 
 
-	//still need to correct the tangent and normals. I'm also realizing that they dont need to be right 
-	//in order to draw the shapes in our scene. So theres no guarantee that any of the other shapes 
-	//have working normals/tangent values
-	XMFLOAT3 tangent;
-	XMFLOAT3 normal;
+	//f tangent and normal for the front and back, s tangent and normal for the sides
+	XMFLOAT3 fTangent;
+	XMFLOAT3 sTangent;
+	XMFLOAT3 fNormal;
+	XMFLOAT3 sNormal;
 
-	XMVECTOR t = XMVectorSet(w2, height, d2, 0.0f);
+	//sides first
+	XMVECTOR t = XMVectorSet(w2, height, 0.0, 0.0f);
 	XMVECTOR d = { 0.0f,0.0f,1.0f };
-	XMVECTOR w = { 1.0f,0.0f,0.0f };
 	t = XMVector3Normalize(t);
 	XMVECTOR n = XMVector3Cross(t, d);
 
-	XMStoreFloat3(&tangent, t);
-	XMStoreFloat3(&normal, n);
+	XMStoreFloat3(&sTangent, t);
+	XMStoreFloat3(&sNormal, n);
+
+	//now front and back
+	t = XMVectorSet(0.0f, height, d2, 0.0f);
+	d = { 1.0f,0.0f,0.0f };
+	t = XMVector3Normalize(t);
+	n = XMVector3Cross(t, d);
+
+	XMStoreFloat3(&fTangent, t);
+	XMStoreFloat3(&fNormal, n);
 
 	// Fill in the front face vertex data.
-	v[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[1] = Vertex(0.0f, +h2, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[2] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[0] = Vertex(-w2, -h2, -d2, 0.0f, fNormal.y, -fNormal.z, fTangent.x, fTangent.y, fTangent.z, 0.0f, 1.0f);
+	v[1] = Vertex(0.0f, +h2, 0.0f, 0.0f, fNormal.y, -fNormal.z, fTangent.x, fTangent.y, fTangent.z, 0.5f, 0.0f);
+	v[2] = Vertex(+w2, -h2, -d2, 0.0f, fNormal.y, -fNormal.z, fTangent.x, fTangent.y, fTangent.z, 1.0f, 1.0f);
 
 	// Fill in the back face vertex data.
-	v[3] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	v[4] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[5] = Vertex(0.0f, +h2, 0.0f, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[3] = Vertex(-w2, -h2, +d2, 0.0f, fNormal.y, fNormal.z, -fTangent.x, fTangent.y, fTangent.z, 1.0f, 1.0f);
+	v[4] = Vertex(+w2, -h2, +d2, 0.0f, fNormal.y, fNormal.z, -fTangent.x, fTangent.y, fTangent.z, 0.0f, 1.0f);
+	v[5] = Vertex(0.0f, +h2, 0.0f, 0.0f,  fNormal.y, fNormal.z, -fTangent.x, fTangent.y, fTangent.z, 0.5f, 0.0f);
 
 	// Fill in the bottom face vertex data.
 	v[6] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -675,14 +684,14 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 	v[9] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the left face vertex data.
-	v[10] = Vertex(-w2, -h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
-	v[11] = Vertex(0.0f, +h2, 0.0f, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
-	v[12] = Vertex(-w2, -h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
+	v[10] = Vertex(-w2, -h2, +d2, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 0.0f, 1.0f);
+	v[11] = Vertex(0.0f, +h2, 0.0f, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 0.0f, 0.5f);
+	v[12] = Vertex(-w2, -h2, -d2, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 1.0f, 1.0f);
 
 	// Fill in the right face vertex data.
-	v[13] = Vertex(+w2, -h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
-	v[14] = Vertex(+w2, -h2, -d2, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
-	v[15] = Vertex(0.0f, +h2, 0.0f, normal.x, -normal.y, 0.0f, -tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
+	v[13] = Vertex(+w2, -h2, +d2, sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, fTangent.z, 1.0f, 1.0f);
+	v[14] = Vertex(+w2, -h2, -d2, sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, fTangent.z, 0.0f, 1.0f);
+	v[15] = Vertex(0.0f, +h2, 0.0f, sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, fTangent.z, 0.5f, 0.0f);
 	
 
 	meshData.Vertices.assign(&v[0], &v[16]);
@@ -755,8 +764,8 @@ GeometryGenerator::MeshData GeometryGenerator::CreateWedge(float width, float he
 	XMFLOAT3 tangent;
 	XMFLOAT3 normal;
 
-	XMVECTOR t = XMVectorSet(width, height, 0.0f, 0.0f);
-	XMVECTOR d = { 0.0f,0.0f,1.0f };
+	XMVECTOR t = XMVectorSet(0.0f, height, depth, 0.0f);
+	XMVECTOR d = { 1.0f,0.0f,0.0f };
 	t = XMVector3Normalize(t);
 	XMVECTOR n = XMVector3Cross(t, d);
 
@@ -764,7 +773,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateWedge(float width, float he
 	XMStoreFloat3(&normal, n);
 	// bottom face
 	// Fill in the bottom face vertex data.
-	//use cube to find the 8 correspoding params. the first 3 should be mapped proper. 
+	//use cube to find the 8 corresponding params. the first 3 should be mapped proper. 
 
 	//bottom 
 	v[0] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -772,31 +781,29 @@ GeometryGenerator::MeshData GeometryGenerator::CreateWedge(float width, float he
 	v[2] = Vertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 	v[3] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
-	//left face
-	// Fill in the front face vertex data.
+	//front
 	v[4] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 	v[5] = Vertex(w2, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-	v[6] = Vertex(w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[6] = Vertex(w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
-	//right face
-	v[7] = Vertex(w2, h2, d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[8] = Vertex(-w2, -h2, d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[9] = Vertex(+w2, -h2, d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	//back face
+	v[7] = Vertex(w2, h2, d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[8] = Vertex(-w2, -h2, d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[9] = Vertex(+w2, -h2, d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
-	//top face
-	v[10] = Vertex(-w2, -h2, d2, normal.x, normal.y, normal.z, tangent.x, tangent.y, 0.0f, 1.0f, 1.0f);
-	v[11] = Vertex(+w2, h2, d2, normal.x, normal.y, normal.z, tangent.x, tangent.y, 0.0f, 0.0f, 1.0f);
-	v[12] = Vertex(+w2, h2, -d2, normal.x, normal.y, normal.z, tangent.x, tangent.y, 0.0f, 0.0f, 0.0f);
-	v[13] = Vertex(-w2, -h2, -d2, normal.x, normal.y, normal.z, tangent.x, tangent.y, 0.0f, 1.0f, 0.0f);
+	//top/left face
+	v[10] = Vertex(-w2, -h2, d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
+	v[11] = Vertex(+w2, h2, d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
+	v[12] = Vertex(+w2, h2, -d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
+	v[13] = Vertex(-w2, -h2, -d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
 
-	//back face 
-	v[14] = Vertex(w2, +h2, -d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
-	v[15] = Vertex(w2, h2, d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
-	v[16] = Vertex(w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
-	v[17] = Vertex(w2, -h2, -d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	//right face 
+	v[14] = Vertex(w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+	v[15] = Vertex(w2, h2, d2,   1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	v[16] = Vertex(w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+	v[17] = Vertex(w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
 
 	meshData.Vertices.assign(&v[0], &v[18]);
-	//left face
 	
 
 	//bottom face
