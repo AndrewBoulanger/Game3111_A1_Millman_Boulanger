@@ -558,7 +558,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTriangularPrism(float baseW
 	XMFLOAT3 normal;
 
 	XMVECTOR t = XMVectorSet(w2, height, 0.0f, 0.0f);
-	XMVECTOR d = { 0.0f,0.0f,1.0f };
+	XMVECTOR d = { 0.0f,0.0f,-1.0f };
 	t = XMVector3Normalize(t);
 	XMVECTOR n = XMVector3Cross(t, d);
 
@@ -651,7 +651,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 
 	//sides first
 	XMVECTOR t = XMVectorSet(w2, height, 0.0, 0.0f);
-	XMVECTOR d = { 0.0f,0.0f,1.0f };
+	XMVECTOR d = { 0.0f,0.0f,-1.0f };
 	t = XMVector3Normalize(t);
 	XMVECTOR n = XMVector3Cross(t, d);
 
@@ -660,7 +660,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 
 	//now front and back
 	t = XMVectorSet(0.0f, height, d2, 0.0f);
-	d = { 1.0f,0.0f,0.0f };
+	d = { -1.0f,0.0f,0.0f };
 	t = XMVector3Normalize(t);
 	n = XMVector3Cross(t, d);
 
@@ -685,7 +685,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 
 	// Fill in the left face vertex data.
 	v[10] = Vertex(-w2, -h2, +d2, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 0.0f, 1.0f);
-	v[11] = Vertex(0.0f, +h2, 0.0f, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 0.0f, 0.5f);
+	v[11] = Vertex(0.0f, +h2, 0.0f, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 0.5f, 0.0f);
 	v[12] = Vertex(-w2, -h2, -d2, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 1.0f, 1.0f);
 
 	// Fill in the right face vertex data.
@@ -1236,7 +1236,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, fl
 			vertex.Position = XMFLOAT3(r * c, y, r * s);
 
 			vertex.TexC.x = (float)j / sliceCount;
-			vertex.TexC.y = 1.0f  * i;
+			vertex.TexC.y = 0.0f + i;
 
 
 			// This is unit length.
@@ -1271,7 +1271,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, fl
 			vertex.Position = XMFLOAT3(r * c, y, r * s);
 
 			vertex.TexC.x = (float)j / sliceCount;
-			vertex.TexC.y = 1.0f * i;
+			vertex.TexC.y = 1.0f - i;
 
 
 			// This is unit length.
