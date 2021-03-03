@@ -35,6 +35,8 @@ struct RenderItem
     // and scale of the object in the world.
     XMFLOAT4X4 World = MathHelper::Identity4x4();
 
+    XMFLOAT4X4 TWorld = MathHelper::Identity4x4();
+
     XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
 
 	// Dirty flag indicating the object data has changed and we need to update the constant buffer.
@@ -92,7 +94,7 @@ private:
     void BuildPSOs();
     void BuildFrameResources();
     void BuildMaterials();
-    void SetRenderItemInfo(RenderItem &Ritem, std::string itemType);
+    void SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform);
     void BuildRenderItems();
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
  
@@ -106,7 +108,7 @@ private:
     UINT mCbvSrvDescriptorSize = 0;
 
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
+  //  ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
 
 	ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 
@@ -379,9 +381,14 @@ void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
 		if(e->NumFramesDirty > 0)
 		{
 			XMMATRIX world = XMLoadFloat4x4(&e->World);
+            XMMATRIX tWorld = XMLoadFloat4x4(&e->TWorld);
+            XMMATRIX texTransform = XMLoadFloat4x4(&e->TexTransform);
 
 			ObjectConstants objConstants;
 			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+            XMStoreFloat4x4(&objConstants.TWorld, XMMatrixTranspose(MathHelper::InverseTranspose(world)));
+            XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
+
 
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
@@ -443,13 +450,13 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.DeltaTime = gt.DeltaTime();
 
     //lights
-	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
-	mMainPassCB.Lights[0].Direction = { 0.57735f, -0.57735f, 0.57735f };
-	mMainPassCB.Lights[0].Strength = { 0.8f, 0.8f, 0.8f };
+	//mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.25f, 1.0f };
+	mMainPassCB.Lights[0].Direction = { 0.0f, -0.0f, 1.0f };
+	mMainPassCB.Lights[0].Strength = { 0.0f, 0.99, 0.0f };
 	mMainPassCB.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
-	mMainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
+	mMainPassCB.Lights[1].Strength = { 0.0f, 0.0f, 0.0f };
 	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
-	mMainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+	mMainPassCB.Lights[2].Strength = { 0.0f, 0.0f, 0.0f };
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(0, mMainPassCB);
@@ -489,18 +496,18 @@ void ShapesApp::LoadTextures()
 
 void ShapesApp::BuildDescriptorHeaps()
 {
-    UINT objCount = (UINT)mOpaqueRitems.size();
+    //UINT objCount = (UINT)mOpaqueRitems.size();
 
-    UINT numDescriptors = (objCount + 1) * gNumFrameResources;
+    //UINT numDescriptors = (objCount + 1) * gNumFrameResources;
 
-    mPassCbvOffset = objCount * gNumFrameResources;
+    //mPassCbvOffset = objCount * gNumFrameResources;
 
-    D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = numDescriptors;
-    cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    cbvHeapDesc.NodeMask = 0;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
+    //D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
+    //cbvHeapDesc.NumDescriptors = numDescriptors;
+    //cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    //cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    //cbvHeapDesc.NodeMask = 0;
+    //ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
 
 	//
 	// Create the SRV heap.
@@ -537,11 +544,11 @@ void ShapesApp::BuildDescriptorHeaps()
 	md3dDevice->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
 
 	// next descriptor
-	//hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
-	//srvDesc.Format = tileTex->GetDesc().Format;
-	//srvDesc.Texture2D.MipLevels = tileTex->GetDesc().MipLevels;
-	//md3dDevice->CreateShaderResourceView(tileTex.Get(), &srvDesc, hDescriptor);
+	srvDesc.Format = tileTex->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = tileTex->GetDesc().MipLevels;
+	md3dDevice->CreateShaderResourceView(tileTex.Get(), &srvDesc, hDescriptor);
 }
 
 //assuming we have n renter items, we can populate the CBV heap with the following code where descriptors 0 to n-
@@ -551,59 +558,59 @@ void ShapesApp::BuildDescriptorHeaps()
 //0th, 1st, and 2nd frame resource
 void ShapesApp::BuildConstantBufferViews()
 {
-    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+   // UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-    UINT objCount = (UINT)mOpaqueRitems.size();
+   // UINT objCount = (UINT)mOpaqueRitems.size();
 
-    // Need a CBV descriptor for each object for each frame resource.
-    for(int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
-    {
-        auto objectCB = mFrameResources[frameIndex]->ObjectCB->Resource();
-        for(UINT i = 0; i < objCount; ++i)
-        {
-            D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
+   // // Need a CBV descriptor for each object for each frame resource.
+   // for(int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
+   // {
+   //     auto objectCB = mFrameResources[frameIndex]->ObjectCB->Resource();
+   //     for(UINT i = 0; i < objCount; ++i)
+   //     {
+   //         D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
 
-            // Offset to the ith object constant buffer in the buffer.
-            cbAddress += i*objCBByteSize;
+   //         // Offset to the ith object constant buffer in the buffer.
+   //         cbAddress += i*objCBByteSize;
 
-            // Offset to the object cbv in the descriptor heap.
-            int heapIndex = frameIndex*objCount + i;
+   //         // Offset to the object cbv in the descriptor heap.
+   //         int heapIndex = frameIndex*objCount + i;
 
-			//we can get a handle to the first descriptor in a heap with the ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart
-            auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+			////we can get a handle to the first descriptor in a heap with the ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart
+   //         auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
 
-			//our heap has more than one descriptor,we need to know the size to increment in the heap to get to the next descriptor
-			//This is hardware specific, so we have to query this information from the device, and it depends on
-			//the heap type.Recall that our D3DApp class caches this information: 	mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
+			////our heap has more than one descriptor,we need to know the size to increment in the heap to get to the next descriptor
+			////This is hardware specific, so we have to query this information from the device, and it depends on
+			////the heap type.Recall that our D3DApp class caches this information: 	mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+   //         handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
 
-            D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-            cbvDesc.BufferLocation = cbAddress;
-            cbvDesc.SizeInBytes = objCBByteSize;
+   //         D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+   //         cbvDesc.BufferLocation = cbAddress;
+   //         cbvDesc.SizeInBytes = objCBByteSize;
 
-            md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-        }
-    }
+   //         md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+   //     }
+   // }
 
-    UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+   // UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
 
-    // Last three descriptors are the pass CBVs for each frame resource.
-    for(int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
-    {
-        auto passCB = mFrameResources[frameIndex]->PassCB->Resource();
-        D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
+   // // Last three descriptors are the pass CBVs for each frame resource.
+   // for(int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
+   // {
+   //     auto passCB = mFrameResources[frameIndex]->PassCB->Resource();
+   //     D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
 
-        // Offset to the pass cbv in the descriptor heap.
-        int heapIndex = mPassCbvOffset + frameIndex;
-        auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-        handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
+   //     // Offset to the pass cbv in the descriptor heap.
+   //     int heapIndex = mPassCbvOffset + frameIndex;
+   //     auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+   //     handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
 
-        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-        cbvDesc.BufferLocation = cbAddress;
-        cbvDesc.SizeInBytes = passCBByteSize;
-        
-        md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-    }
+   //     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+   //     cbvDesc.BufferLocation = cbAddress;
+   //     cbvDesc.SizeInBytes = passCBByteSize;
+   //     
+   //     md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+   // }
 }
 
 //A root signature defines what resources need to be bound to the pipeline before issuing a draw call and
@@ -671,9 +678,9 @@ void ShapesApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth, 60, 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
-	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20);
+	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
     GeometryGenerator::MeshData triPrism = geoGen.CreateTriangularPrism(10, 1, 1);
-    GeometryGenerator::MeshData diamond = geoGen.CreateDiamond(1, 0.7f, 0.3, 1, 6);
+    GeometryGenerator::MeshData diamond = geoGen.CreateDiamond(1, 0.7f, 0.3, 1, 6, 1);
     GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(1, 1, 1 );
     GeometryGenerator::MeshData torus = geoGen.CreateTorus(0.3f, 2.0f, 20, 20);
     GeometryGenerator::MeshData wedge = geoGen.CreateWedge(1.0f, 1.0f, 2.0f);
@@ -1032,15 +1039,18 @@ void ShapesApp::BuildMaterials()
 
 //makes building render items simpler, reduces repeated chunks of code
 //the itemType is the key used to access the submesh
-void ShapesApp::SetRenderItemInfo(RenderItem &Ritem, std::string itemType)
+void ShapesApp::SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform)
 {
     Ritem.ObjCBIndex = objCBIndex++;
+    XMStoreFloat4x4(&Ritem.World, transform);
     Ritem.Mat = mMaterials["stone0"].get();
     Ritem.Geo = mGeometries["shapeGeo"].get();
     Ritem.PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     Ritem.IndexCount = Ritem.Geo->DrawArgs[itemType].IndexCount;
     Ritem.StartIndexLocation = Ritem.Geo->DrawArgs[itemType].StartIndexLocation;
     Ritem.BaseVertexLocation = Ritem.Geo->DrawArgs[itemType].BaseVertexLocation;
+    XMMATRIX inverseTransform = XMMatrixTranspose(transform); //MathHelper::InverseTranspose(transform);
+    XMStoreFloat4x4(&Ritem.TWorld, inverseTransform);
 }
 
 void ShapesApp::BuildRenderItems()
@@ -1051,9 +1061,9 @@ void ShapesApp::BuildRenderItems()
     float radius = sqrt(w2 * w2 + d2 * d2);
 
     auto gridRitem = std::make_unique<RenderItem>();
-    gridRitem->World = MathHelper::Identity4x4();
+    XMMATRIX gridWorld = XMMatrixIdentity();
 	
-    SetRenderItemInfo(*gridRitem, "grid");
+    SetRenderItemInfo(*gridRitem, "grid",gridWorld);
 	mAllRitems.push_back(std::move(gridRitem));
 
     //tower objects
@@ -1074,18 +1084,14 @@ void ShapesApp::BuildRenderItems()
         XMMATRIX sphereWorld = XMMatrixScaling(0.3f, 0.3f, 0.3f) * XMMatrixTranslation(cRadius, 23.1f, sRadius);
         XMMATRIX flagWorld = XMMatrixScaling(1.5f, 1.0f, 0.1f) * XMMatrixTranslation(cRadius - 1, 22.5f, sRadius);
 
-        XMStoreFloat4x4(&towerRitem->World, towerWorld);
-        SetRenderItemInfo(*towerRitem, "cylinder");
+        SetRenderItemInfo(*towerRitem, "cylinder", towerWorld);
 
-        XMStoreFloat4x4(&poleRitem->World, poleWorld);
-        SetRenderItemInfo(*poleRitem, "cylinder");
+        SetRenderItemInfo(*poleRitem, "cylinder", poleWorld);
 
 
-        XMStoreFloat4x4(&flagRitem->World, flagWorld);
-        SetRenderItemInfo(*flagRitem, "box");
+        SetRenderItemInfo(*flagRitem, "box", flagWorld);
 
-        XMStoreFloat4x4(&sphereRitem->World, sphereWorld);
-        SetRenderItemInfo(*sphereRitem, "sphere");
+        SetRenderItemInfo(*sphereRitem, "sphere", sphereWorld);
    
 
         mAllRitems.push_back(std::move(towerRitem));
@@ -1098,8 +1104,7 @@ void ShapesApp::BuildRenderItems()
         {
             auto roofRitem = std::make_unique<RenderItem>();
             XMMATRIX roofWorld = XMMatrixScaling(8.0f, 6.0f, 8.0f) * XMMatrixTranslation(cRadius, 17.0f, sRadius);
-            XMStoreFloat4x4(&roofRitem->World, roofWorld);
-            SetRenderItemInfo(*roofRitem, "cone");
+            SetRenderItemInfo(*roofRitem, "cone", roofWorld);
             mAllRitems.push_back(std::move(roofRitem));
         }
     }
@@ -1108,14 +1113,12 @@ void ShapesApp::BuildRenderItems()
 
     auto paleRitem = std::make_unique<RenderItem>();
     XMMATRIX paleWorld = XMMatrixScaling(3.5f, 3.0f, 3.5f) * XMMatrixTranslation(w2, 17.5f, -d2);
-    XMStoreFloat4x4(&paleRitem->World, paleWorld);
-    SetRenderItemInfo(*paleRitem, "cylinder2");
+    SetRenderItemInfo(*paleRitem, "cylinder2", paleWorld);
     mAllRitems.push_back(std::move(paleRitem));
 
     auto torusRitem = std::make_unique<RenderItem>();
     XMMATRIX torusWorld = XMMatrixScaling(1.8f, 2.0f, 1.8f) * XMMatrixTranslation(w2, 14.5f, -d2);
-    XMStoreFloat4x4(&torusRitem->World, torusWorld);
-    SetRenderItemInfo(*torusRitem, "torus2");
+    SetRenderItemInfo(*torusRitem, "torus2", torusWorld);
     mAllRitems.push_back(std::move(torusRitem));
 
 
@@ -1131,14 +1134,16 @@ void ShapesApp::BuildRenderItems()
         if (i < 3)
         {
             auto boxRitem = std::make_unique<RenderItem>();
-            XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(1.0f, 10.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 5.0f, sRadius));
-            SetRenderItemInfo(*boxRitem, "box");
+            XMMATRIX world = XMMatrixScaling(1.0f, 10.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 5.0f, sRadius);
+           
+            SetRenderItemInfo(*boxRitem, "box", world);
             mAllRitems.push_back(std::move(boxRitem));
         }
         //the prism along the top of the walls
         auto prismRitem = std::make_unique<RenderItem>();
-        XMStoreFloat4x4(&prismRitem->World, XMMatrixScaling(1.0f, 4.0f, width-3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius));
-        SetRenderItemInfo(*prismRitem, "prism");
+        XMMATRIX PrismWorld = XMMatrixScaling(1.0f, 4.0f, width - 3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius);
+       
+        SetRenderItemInfo(*prismRitem, "prism", PrismWorld);
         mAllRitems.push_back(std::move(prismRitem));
 
         int mogulsNum = 50;
@@ -1146,15 +1151,16 @@ void ShapesApp::BuildRenderItems()
         {
           
             auto boxRitem = std::make_unique<RenderItem>();
+            XMMATRIX MogulWorld;
             if (theta == XM_PI || theta == 0) 
             {
-                XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 1.0) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius , 12.8f, (sRadius-25) + j));
+                MogulWorld = XMMatrixScaling(2.0f, 1.0f, 1.0) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius , 12.8f, (sRadius-25) + j);
             }
             else 
             {
-                XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f, 1.0f, 1.0)* XMMatrixRotationY(theta)* XMMatrixTranslation((cRadius-25) + j, 12.8f, sRadius ));
+                 MogulWorld = XMMatrixScaling(2.0f, 1.0f, 1.0)* XMMatrixRotationY(theta)* XMMatrixTranslation((cRadius-25) + j, 12.8f, sRadius );
             }
-            SetRenderItemInfo(*boxRitem, "box");
+            SetRenderItemInfo(*boxRitem, "box", MogulWorld);
             mAllRitems.push_back(std::move(boxRitem));
         }
             
@@ -1165,37 +1171,38 @@ void ShapesApp::BuildRenderItems()
     for (int i = 0; i < 2; i++)
     {
         auto boxRitem = std::make_unique<RenderItem>();
-        XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(19.0f, 10.0f, 1.0f) * XMMatrixTranslation(-12.5f + i * 25.0f, 5.0f, -25.0f));
-        SetRenderItemInfo(*boxRitem, "box");
+        XMMATRIX WallWorld = XMMatrixScaling(19.0f, 10.0f, 1.0f) * XMMatrixTranslation(-12.5f + i * 25.0f, 5.0f, -25.0f);
+        SetRenderItemInfo(*boxRitem, "box", WallWorld);
         mAllRitems.push_back(std::move(boxRitem));
     }
 
     auto pyramidRitem = std::make_unique<RenderItem>();
-    XMStoreFloat4x4(&pyramidRitem->World, XMMatrixScaling(21.0f, 6.0f, 21.0f) * XMMatrixTranslation(0.0f, 7.5f, 13.0f));
-    SetRenderItemInfo(*pyramidRitem, "pyramid");
+    XMMATRIX PyrWorld = XMMatrixScaling(21.0f, 6.0f, 21.0f) * XMMatrixTranslation(0.0f, 7.5f, 13.0f);
+    SetRenderItemInfo(*pyramidRitem, "pyramid", PyrWorld);
     mAllRitems.push_back(std::move(pyramidRitem));
 
     auto diamondRitem = std::make_unique<RenderItem>();
-    XMStoreFloat4x4(&diamondRitem->World, XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 13.0f, 13.0f));
-    SetRenderItemInfo(*diamondRitem, "diamond");
+    XMMATRIX DiamondWorld = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 13.0f, 13.0f);
+    SetRenderItemInfo(*diamondRitem, "diamond", DiamondWorld);
     mAllRitems.push_back(std::move(diamondRitem));
 
     auto RingRitem = std::make_unique<RenderItem>();
-    XMStoreFloat4x4(&RingRitem->World, XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationX(1.571) * XMMatrixTranslation(0.0f, 11.75f, 13.0f));
-    SetRenderItemInfo(*RingRitem, "torus");
+    XMMATRIX RingWorld = XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationX(1.571) * XMMatrixTranslation(0.0f, 11.75f, 13.0f);
+    SetRenderItemInfo(*RingRitem, "torus", RingWorld);
     mAllRitems.push_back(std::move(RingRitem));
     
     for (int i = 0; i < 2; i++)
     {
         auto wedgeRitem = std::make_unique<RenderItem>();
-        XMStoreFloat4x4(&wedgeRitem->World, XMMatrixRotationY(-thetaSquareStep) * XMMatrixScaling(3.0f, 3.0f, 18.0f) * XMMatrixTranslation(0.0f, 4.5f + i * -3, -3.5f + i * -31 ));
-        SetRenderItemInfo(*wedgeRitem, "wedge");
+        XMMATRIX wedgeWorld = (XMMatrixRotationY(-thetaSquareStep) * XMMatrixScaling(3.0f, 3.0f, 18.0f) * XMMatrixTranslation(0.0f, 4.5f + i * -3, -3.5f + i * -31));
+        SetRenderItemInfo(*wedgeRitem, "wedge", wedgeWorld);
         mAllRitems.push_back(std::move(wedgeRitem));
     }
 
     auto pathRitem = std::make_unique<RenderItem>();
-    XMStoreFloat4x4(&pathRitem->World, XMMatrixScaling(6.0f, 3.0f, 13.0f)* XMMatrixTranslation( 0.0f, 1.5f, -19.0f));
-    SetRenderItemInfo(*pathRitem, "box");
+    XMMATRIX pathWorld = XMMatrixScaling(6.0f, 3.0f, 13.0f)* XMMatrixTranslation( 0.0f, 1.5f, -19.0f);
+    SetRenderItemInfo(*pathRitem, "box", pathWorld);
+
     mAllRitems.push_back(std::move(pathRitem));
 
 	// All the render items are opaque.

@@ -34,6 +34,7 @@ SamplerState gsamAnisotropicClamp : register(s5);
 cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorld;
+    float4x4 tWorld;
     float4x4 gTexTransform;
 };
 
@@ -93,9 +94,9 @@ VertexOut VS(VertexIn vin)
     // Transform to world space.
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
     vout.PosW = posW.xyz;
-
+     
     // Assumes nonuniform scaling; otherwise, need to use inverse-transpose of world matrix.
-    vout.NormalW = mul(vin.NormalL, (float3x3)gWorld);
+    vout.NormalW = mul(vin.NormalL, (float3x3)tWorld);
 
     // Transform to homogeneous clip space.
     vout.PosH = mul(posW, gViewProj);

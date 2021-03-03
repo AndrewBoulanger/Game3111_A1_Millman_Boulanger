@@ -104,7 +104,7 @@ public:
 	/// bottom radius controls the width of the base
 	// cylinders.  The slices and stacks parameters control the degree of tessellation.
 	///</summary>
-	MeshData CreateCone(float bottomRadius, float height, uint32 sliceCount);
+	MeshData CreateCone(float bottomRadius, float height, uint32 sliceCount, uint32 stackCount);
 	MeshData CreateWedge(float width, float height, float depth);
 
 
@@ -119,7 +119,7 @@ public:
 	//creates 2 conjoined cylinders with only 2 horizontal faces (the top and the pointed bottom, no hidden inner faces here). 
 	//Both cylinders share a middle radius, the bottom is an inverse cone.
 	//the bottom height can be set, independant of the top.
-    MeshData CreateDiamond(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount);
+    MeshData CreateDiamond(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount, uint32 stackCount);
 
 	///<summary>
 	/// Creates an mxn grid in the xz-plane with m rows and n columns, centered
@@ -141,7 +141,8 @@ public:
 	MeshData CreatePyramid(float baseWidth, float height, float depth);
 
 private:
-	
+	DirectX::XMFLOAT3 getNormal(DirectX::XMFLOAT3 p0, DirectX::XMFLOAT3 p1, DirectX::XMFLOAT3 p2);
+
     Vertex MidPoint(const Vertex& v0, const Vertex& v1);
     void BuildCylinderTopCap(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount, MeshData& meshData);
     void BuildCylinderBottomCap(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount, MeshData& meshData);

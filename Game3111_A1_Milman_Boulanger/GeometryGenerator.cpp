@@ -554,17 +554,6 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTriangularPrism(float baseW
 	float h2 = 0.5f * height;
 	float d2 = 0.5f * depth;
 
-	XMFLOAT3 tangent;
-	XMFLOAT3 normal;
-
-	XMVECTOR t = XMVectorSet(w2, height, 0.0f, 0.0f);
-	XMVECTOR d = { 0.0f,0.0f,-1.0f };
-	t = XMVector3Normalize(t);
-	XMVECTOR n = XMVector3Cross(t, d);
-
-	XMStoreFloat3(&tangent,t);
-	XMStoreFloat3(&normal,n);
-
 	// Fill in the front face vertex data.
 	v[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 	v[1] = Vertex(0.0f, +h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.5f, 0.0f);
@@ -582,16 +571,19 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTriangularPrism(float baseW
 	v[9] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the left face vertex data.
-	v[10] = Vertex(-w2, -h2, +d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 0.0f, 1.0f);
-	v[11] = Vertex(0.0f, +h2, +d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 0.0f, 0.0f);
-	v[12] = Vertex(0.0f, +h2, -d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 1.0f, 0.0f);
-	v[13] = Vertex(-w2, -h2, -d2, -normal.x, normal.y, 0.0f, tangent.x, tangent.y, -tangent.z, 1.0f, 1.0f);
+	XMFLOAT3 LNormal = getNormal({ -w2, -h2, d2 }, { 0.0f, +h2, +d2 }, { 0.0f, +h2, -d2 });
+	v[10] = Vertex(-w2, -h2, +d2, LNormal.x,  LNormal.y, LNormal.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[11] = Vertex(0.0f, +h2, +d2, LNormal.x, LNormal.y, LNormal.z, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[12] = Vertex(0.0f, +h2, -d2, LNormal.x, LNormal.y, LNormal.z, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[13] = Vertex(-w2, -h2, -d2, LNormal.x, LNormal.y, LNormal.z, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+
 
 	// Fill in the right face vertex data.
-	v[14] = Vertex(+w2, -h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
-	v[15] = Vertex(0.0f, +h2, -d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
-	v[16] = Vertex(0.0f, +h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
-	v[17] = Vertex(+w2, -h2, +d2, normal.x, normal.y, 0.0f, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
+	XMFLOAT3 RNormal = getNormal({ +w2, -h2, d2 }, { 0.0f, +h2, -d2 }, { 0.0f, +h2, +d2 });
+	v[14] = Vertex(+w2, -h2, -d2,  RNormal.x, RNormal.y, RNormal.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[15] = Vertex(0.0f, +h2, -d2, RNormal.x, RNormal.y, RNormal.z, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[16] = Vertex(0.0f, +h2, +d2, RNormal.x, RNormal.y, RNormal.z, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[17] = Vertex(+w2, -h2, +d2, RNormal.x, RNormal.y, RNormal.z,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	meshData.Vertices.assign(&v[0], &v[18]);
 
@@ -642,40 +634,17 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 	float h2 = 0.5f * height;
 	float d2 = 0.5f * depth;
 
-
-	//f tangent and normal for the front and back, s tangent and normal for the sides
-	XMFLOAT3 fTangent;
-	XMFLOAT3 sTangent;
-	XMFLOAT3 fNormal;
-	XMFLOAT3 sNormal;
-
-	//sides first
-	XMVECTOR t = XMVectorSet(w2, height, 0.0, 0.0f);
-	XMVECTOR d = { 0.0f,0.0f,-1.0f };
-	t = XMVector3Normalize(t);
-	XMVECTOR n = XMVector3Cross(t, d);
-
-	XMStoreFloat3(&sTangent, t);
-	XMStoreFloat3(&sNormal, n);
-
-	//now front and back
-	t = XMVectorSet(0.0f, height, d2, 0.0f);
-	d = { -1.0f,0.0f,0.0f };
-	t = XMVector3Normalize(t);
-	n = XMVector3Cross(t, d);
-
-	XMStoreFloat3(&fTangent, t);
-	XMStoreFloat3(&fNormal, n);
-
 	// Fill in the front face vertex data.
-	v[0] = Vertex(-w2, -h2, -d2, 0.0f, fNormal.y, -fNormal.z, fTangent.x, fTangent.y, fTangent.z, 0.0f, 1.0f);
-	v[1] = Vertex(0.0f, +h2, 0.0f, 0.0f, fNormal.y, -fNormal.z, fTangent.x, fTangent.y, fTangent.z, 0.5f, 0.0f);
-	v[2] = Vertex(+w2, -h2, -d2, 0.0f, fNormal.y, -fNormal.z, fTangent.x, fTangent.y, fTangent.z, 1.0f, 1.0f);
+	XMFLOAT3 FNormal = getNormal({ -w2, -h2, -d2 }, { 0.0f, +h2, 0.0f }, { +w2, -h2, -d2 });
+	v[0] = Vertex(-w2, -h2, -d2,    FNormal.x, FNormal.y, FNormal.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[1] = Vertex(0.0f, +h2, 0.0f,  FNormal.x, FNormal.y, FNormal.z, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
+	v[2] = Vertex(+w2, -h2, -d2,    FNormal.x, FNormal.y, FNormal.z, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	// Fill in the back face vertex data.
-	v[3] = Vertex(-w2, -h2, +d2, 0.0f, fNormal.y, fNormal.z, -fTangent.x, fTangent.y, fTangent.z, 1.0f, 1.0f);
-	v[4] = Vertex(+w2, -h2, +d2, 0.0f, fNormal.y, fNormal.z, -fTangent.x, fTangent.y, fTangent.z, 0.0f, 1.0f);
-	v[5] = Vertex(0.0f, +h2, 0.0f, 0.0f,  fNormal.y, fNormal.z, -fTangent.x, fTangent.y, fTangent.z, 0.5f, 0.0f);
+	XMFLOAT3 BNormal = getNormal({ -w2, -h2, +d2 }, { +w2, -h2, +d2 }, { 0.0f, +h2, 0.0f });
+	v[3] = Vertex(-w2, -h2, +d2,   BNormal.x, BNormal.y, BNormal.z, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[4] = Vertex(+w2, -h2, +d2,   BNormal.x, BNormal.y, BNormal.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[5] = Vertex(0.0f, +h2, 0.0f, BNormal.x, BNormal.y, BNormal.z, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
 
 	// Fill in the bottom face vertex data.
 	v[6] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -684,14 +653,16 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 	v[9] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
 	// Fill in the left face vertex data.
-	v[10] = Vertex(-w2, -h2, +d2, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 0.0f, 1.0f);
-	v[11] = Vertex(0.0f, +h2, 0.0f, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 0.5f, 0.0f);
-	v[12] = Vertex(-w2, -h2, -d2, -sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, -fTangent.z, 1.0f, 1.0f);
+	XMFLOAT3 LNormal = getNormal({ -w2, -h2, +d2 }, { 0.0f, +h2, 0.0f }, { -w2, -h2, -d2 });
+	v[10] = Vertex(-w2, -h2, +d2,   LNormal.x, LNormal.y, LNormal.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[11] = Vertex(0.0f, +h2, 0.0f, LNormal.x, LNormal.y, LNormal.z, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
+	v[12] = Vertex(-w2, -h2, -d2,   LNormal.x, LNormal.y, LNormal.z, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	// Fill in the right face vertex data.
-	v[13] = Vertex(+w2, -h2, +d2, sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, fTangent.z, 1.0f, 1.0f);
-	v[14] = Vertex(+w2, -h2, -d2, sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, fTangent.z, 0.0f, 1.0f);
-	v[15] = Vertex(0.0f, +h2, 0.0f, sNormal.x, sNormal.y, 0.0f, fTangent.x, fTangent.y, fTangent.z, 0.5f, 0.0f);
+	XMFLOAT3 RNormal = getNormal({ +w2, -h2, +d2 }, { +w2, -h2, -d2 }, { 0.0f, +h2, 0.0f });
+	v[13] = Vertex(+w2, -h2, +d2,   RNormal.x, RNormal.y, RNormal.z,   0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[14] = Vertex(+w2, -h2, -d2,   RNormal.x, RNormal.y, RNormal.z,   0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[15] = Vertex(0.0f, +h2, 0.0f, RNormal.x, RNormal.y, RNormal.z,   0.0f, 0.0f, 0.0f, 0.5f, 0.0f);
 	
 
 	meshData.Vertices.assign(&v[0], &v[16]);
@@ -722,6 +693,22 @@ GeometryGenerator::MeshData GeometryGenerator::CreatePyramid(float baseWidth, fl
 	
 
 	return meshData;
+}
+
+XMFLOAT3 GeometryGenerator::getNormal(XMFLOAT3 p0, XMFLOAT3 p1, XMFLOAT3 p2)
+{
+	XMVECTOR v0 = XMLoadFloat3(&p0);
+	XMVECTOR v1 = XMLoadFloat3(&p1);
+	XMVECTOR v2 = XMLoadFloat3(&p2);
+	XMVECTOR u = v1 - v0;
+	XMVECTOR v = v2 - v0;
+
+	XMVECTOR normal = XMVector3Normalize(XMVector3Cross(u, v));
+
+	XMFLOAT3 result;  
+	XMStoreFloat3(&result, normal);
+
+	return result;
 }
 
 GeometryGenerator::Vertex GeometryGenerator::MidPoint(const Vertex& v0, const Vertex& v1)
@@ -764,13 +751,6 @@ GeometryGenerator::MeshData GeometryGenerator::CreateWedge(float width, float he
 	XMFLOAT3 tangent;
 	XMFLOAT3 normal;
 
-	XMVECTOR t = XMVectorSet(0.0f, height, depth, 0.0f);
-	XMVECTOR d = { 1.0f,0.0f,0.0f };
-	t = XMVector3Normalize(t);
-	XMVECTOR n = XMVector3Cross(t, d);
-
-	XMStoreFloat3(&tangent, t);
-	XMStoreFloat3(&normal, n);
 	// bottom face
 	// Fill in the bottom face vertex data.
 	//use cube to find the 8 corresponding params. the first 3 should be mapped proper. 
@@ -792,10 +772,11 @@ GeometryGenerator::MeshData GeometryGenerator::CreateWedge(float width, float he
 	v[9] = Vertex(+w2, -h2, d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 
 	//top/left face
-	v[10] = Vertex(-w2, -h2, d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
-	v[11] = Vertex(+w2, h2, d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
-	v[12] = Vertex(+w2, h2, -d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
-	v[13] = Vertex(-w2, -h2, -d2, 0.0f, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
+	normal = getNormal({ -w2, -h2, d2 }, { +w2, h2, d2 }, { +w2, h2, -d2 });
+	v[10] = Vertex(-w2, -h2, d2, normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
+	v[11] = Vertex(+w2, h2, d2,  normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
+	v[12] = Vertex(+w2, h2, -d2, normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
+	v[13] = Vertex(-w2, -h2, -d2,normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
 
 	//right face 
 	v[14] = Vertex(w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
@@ -1054,64 +1035,10 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 	return meshData;
 }
 
-GeometryGenerator::MeshData GeometryGenerator::CreateCone(float bottomRadius, float height, uint32 sliceCount)
+GeometryGenerator::MeshData GeometryGenerator::CreateCone(float bottomRadius, float height, uint32 sliceCount, uint32 stackCount)
 {
-	MeshData meshData;
+	return CreateCylinder(bottomRadius, 0.0f, height, sliceCount, stackCount);
 
-	// Compute vertices forthe bottom ring.
-	float y = -0.5f * height;
-	float r = bottomRadius;
-
-	// vertices of ring
-	float dTheta = 2.0f * XM_PI / sliceCount;
-	for (uint32 j = 0; j <= sliceCount; ++j)
-	{
-		Vertex vertex;
-
-		float c = cosf(j * dTheta);
-		float s = sinf(j * dTheta);
-
-		vertex.Position = XMFLOAT3(r * c, y, r * s);
-
-		vertex.TexC.x = (float)j / sliceCount;
-		vertex.TexC.y = 1.0f;
-
-		// This is unit length.
-		vertex.TangentU = XMFLOAT3(-s, 0.0f, c);
-
-		XMFLOAT3 bitangent(r * c, -height, r * s);
-
-		XMVECTOR T = XMLoadFloat3(&vertex.TangentU);
-		XMVECTOR B = XMLoadFloat3(&bitangent);
-		XMVECTOR N = XMVector3Normalize(XMVector3Cross(T, B));
-		XMStoreFloat3(&vertex.Normal, N);
-
-		meshData.Vertices.push_back(vertex);
-
-	}
-
-	// Add one because we duplicate the first and last vertex per ring
-	// since the texture coordinates are different.
-	uint32 ringVertexCount = sliceCount + 1;
-
-	// Compute indices 
-
-	for (uint32 j = 0; j < sliceCount; ++j)
-	{
-		meshData.Indices32.push_back(j);
-		meshData.Indices32.push_back(ringVertexCount + j);
-		meshData.Indices32.push_back(ringVertexCount + j + 1);
-
-		meshData.Indices32.push_back(j);
-		meshData.Indices32.push_back(ringVertexCount + j + 1);
-		meshData.Indices32.push_back(j + 1);
-	}
-
-
-	BuildCylinderTopCap(bottomRadius, 0.0, height, sliceCount, 1, meshData);
-	BuildCylinderBottomCap(bottomRadius, 0.0, height, sliceCount, 1, meshData);
-
-	return meshData;
 }
 GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount)
 {
@@ -1207,7 +1134,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateCylinder(float bottomRadius
     return meshData;
 }
 
-GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount)
+GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, float topRadius, float topHeight, float bottomHeight, uint32 sliceCount, uint32 stackCount)
 {
 	MeshData meshData;
 	float height = (topHeight + bottomHeight);
@@ -1216,12 +1143,12 @@ GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, fl
 	// Amount to increment radius as we move up each stack level from bottom to top.
 	float radiusStep = topRadius - midRadius;
 
-	uint32 ringCount = 1;
+	uint32 ringCount = stackCount +1;
 
 	//for middle and bottom
 	for (uint32 i = 0; i < ringCount; ++i)
 	{
-		float y = -h + i * bottomHeight;
+		float y = -h + i * bottomHeight ;
 		float r = 0.0f + i * midRadius;
 
 		// vertices of ring
@@ -1236,7 +1163,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, fl
 			vertex.Position = XMFLOAT3(r * c, y, r * s);
 
 			vertex.TexC.x = (float)j / sliceCount;
-			vertex.TexC.y = 0.0f + i;
+			vertex.TexC.y = 1.0f - (float)i / stackCount;
 
 
 			// This is unit length.
@@ -1270,8 +1197,8 @@ GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, fl
 
 			vertex.Position = XMFLOAT3(r * c, y, r * s);
 
-			vertex.TexC.x = (float)j / sliceCount;
-			vertex.TexC.y = 1.0f - i;
+			vertex.TexC.x = (float)(j -1) / sliceCount;
+			vertex.TexC.y = 1.0f - (float)i / stackCount;
 
 
 			// This is unit length.
