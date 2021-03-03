@@ -28,7 +28,6 @@ const float depth = 50;
 struct RenderItem
 {
 	RenderItem() = default;
-    RenderItem(const RenderItem& rhs) = delete;
 
     // World matrix of the shape that describes the object's local space
     // relative to the world space, which defines the position, orientation,
@@ -94,7 +93,7 @@ private:
     void BuildPSOs();
     void BuildFrameResources();
     void BuildMaterials();
-    void SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform);
+    void SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform, std::string material);
     void BuildRenderItems();
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
  
@@ -186,6 +185,8 @@ bool ShapesApp::Initialize()
 
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+
+    mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     LoadTextures();
     BuildRootSignature();
@@ -450,9 +451,9 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.DeltaTime = gt.DeltaTime();
 
     //lights
-	//mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.25f, 1.0f };
-	mMainPassCB.Lights[0].Direction = { 0.0f, -0.0f, 1.0f };
-	mMainPassCB.Lights[0].Strength = { 0.0f, 0.99, 0.0f };
+	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.25f, 1.0f };
+	mMainPassCB.Lights[0].Direction = { -0.5f, -0.35f, 0.5f };
+	mMainPassCB.Lights[0].Strength = { 0.65f, 0.35, 0.0f };
 	mMainPassCB.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
 	mMainPassCB.Lights[1].Strength = { 0.0f, 0.0f, 0.0f };
 	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
@@ -478,16 +479,25 @@ void ShapesApp::LoadTextures()
 		mCommandList.Get(), stoneTex->Filename.c_str(),
 		stoneTex->Resource, stoneTex->UploadHeap));
 
-	auto tileTex = std::make_unique<Texture>();
-	tileTex->Name = "tileTex";
-	tileTex->Filename = L"Textures/tile.dds";
-	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-		mCommandList.Get(), tileTex->Filename.c_str(),
-		tileTex->Resource, tileTex->UploadHeap));
+    auto waterTex = std::make_unique<Texture>();
+    waterTex->Name = "waterTex";
+    waterTex->Filename = L"Textures/water1.dds";
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+        mCommandList.Get(), waterTex->Filename.c_str(),
+        waterTex->Resource, waterTex->UploadHeap));
+
+    auto iceTex = std::make_unique<Texture>();
+    iceTex->Name = "iceTex";
+    iceTex->Filename = L"Textures/ice.dds";
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+        mCommandList.Get(), iceTex->Filename.c_str(),
+        iceTex->Resource, iceTex->UploadHeap));
+
 
 	mTextures[bricksTex->Name] = std::move(bricksTex);
 	mTextures[stoneTex->Name] = std::move(stoneTex);
-	mTextures[tileTex->Name] = std::move(tileTex);
+	mTextures[waterTex->Name] = std::move(waterTex);
+	mTextures[iceTex->Name] = std::move(iceTex);
 }
 
 //If we have 3 frame resources and n render items, then we have three 3n object constant
@@ -513,7 +523,7 @@ void ShapesApp::BuildDescriptorHeaps()
 	// Create the SRV heap.
 	//
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 3;
+	srvHeapDesc.NumDescriptors = 4;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
@@ -525,7 +535,8 @@ void ShapesApp::BuildDescriptorHeaps()
 
 	auto bricksTex = mTextures["bricksTex"]->Resource;
 	auto stoneTex = mTextures["stoneTex"]->Resource;
-	auto tileTex = mTextures["tileTex"]->Resource;
+	auto waterTex = mTextures["waterTex"]->Resource;
+	auto iceTex = mTextures["iceTex"]->Resource;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -543,12 +554,19 @@ void ShapesApp::BuildDescriptorHeaps()
 	srvDesc.Texture2D.MipLevels = stoneTex->GetDesc().MipLevels;
 	md3dDevice->CreateShaderResourceView(stoneTex.Get(), &srvDesc, hDescriptor);
 
-	// next descriptor
+	//// next descriptor
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
-	srvDesc.Format = tileTex->GetDesc().Format;
-	srvDesc.Texture2D.MipLevels = tileTex->GetDesc().MipLevels;
-	md3dDevice->CreateShaderResourceView(tileTex.Get(), &srvDesc, hDescriptor);
+	srvDesc.Format = waterTex->GetDesc().Format;
+	srvDesc.Texture2D.MipLevels = waterTex->GetDesc().MipLevels;
+	md3dDevice->CreateShaderResourceView(waterTex.Get(), &srvDesc, hDescriptor);
+
+    // next descriptor
+    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+    srvDesc.Format = iceTex->GetDesc().Format;
+    srvDesc.Texture2D.MipLevels = iceTex->GetDesc().MipLevels;
+    md3dDevice->CreateShaderResourceView(iceTex.Get(), &srvDesc, hDescriptor);
 }
 
 //assuming we have n renter items, we can populate the CBV heap with the following code where descriptors 0 to n-
@@ -1013,7 +1031,7 @@ void ShapesApp::BuildMaterials()
 	bricks0->MatCBIndex = 0;
 	bricks0->DiffuseSrvHeapIndex = 0;
 	bricks0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	bricks0->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	bricks0->FresnelR0 = XMFLOAT3(0.5f, 0.5f, 0.5f);
 	bricks0->Roughness = 0.1f;
 
 	auto stone0 = std::make_unique<Material>();
@@ -1024,33 +1042,43 @@ void ShapesApp::BuildMaterials()
 	stone0->FresnelR0 = XMFLOAT3(0.95f, 0.95f, 0.95f);
 	stone0->Roughness = 0.01f;
 
-	auto tile0 = std::make_unique<Material>();
-	tile0->Name = "tile0";
-	tile0->MatCBIndex = 2;
-	tile0->DiffuseSrvHeapIndex = 2;
-	tile0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	tile0->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
-	tile0->Roughness = 0.3f;
+	auto plastic0 = std::make_unique<Material>();
+	plastic0->Name = "plastic0";
+	plastic0->MatCBIndex = 2;
+	plastic0->DiffuseSrvHeapIndex = 2;
+	plastic0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	plastic0->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
+	plastic0->Roughness = 0.3f;
+
+    auto sand0 = std::make_unique<Material>();
+    sand0->Name = "sand0";
+    sand0->MatCBIndex = 3;
+    sand0->DiffuseSrvHeapIndex = 3;
+    sand0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    sand0->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    sand0->Roughness = 0.9f;
 
 	mMaterials["bricks0"] = std::move(bricks0);
 	mMaterials["stone0"] = std::move(stone0);
-	mMaterials["tile0"] = std::move(tile0);
+	mMaterials["plastic0"] = std::move(plastic0);
+	mMaterials["sand0"] = std::move(sand0);
 }
 
 //makes building render items simpler, reduces repeated chunks of code
 //the itemType is the key used to access the submesh
-void ShapesApp::SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform)
+void ShapesApp::SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform, std::string material)
 {
     Ritem.ObjCBIndex = objCBIndex++;
     XMStoreFloat4x4(&Ritem.World, transform);
-    Ritem.Mat = mMaterials["stone0"].get();
+    Ritem.Mat = mMaterials[material].get();
+    Ritem.Mat->NormalSrvHeapIndex = 1;
     Ritem.Geo = mGeometries["shapeGeo"].get();
     Ritem.PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     Ritem.IndexCount = Ritem.Geo->DrawArgs[itemType].IndexCount;
     Ritem.StartIndexLocation = Ritem.Geo->DrawArgs[itemType].StartIndexLocation;
     Ritem.BaseVertexLocation = Ritem.Geo->DrawArgs[itemType].BaseVertexLocation;
-    XMMATRIX inverseTransform = XMMatrixTranspose(transform); //MathHelper::InverseTranspose(transform);
-    XMStoreFloat4x4(&Ritem.TWorld, inverseTransform);
+    //XMMATRIX inverseTransform = XMMatrixTranspose(transform); //MathHelper::InverseTranspose(transform);
+    //XMStoreFloat4x4(&Ritem.TWorld, inverseTransform);
 }
 
 void ShapesApp::BuildRenderItems()
@@ -1063,7 +1091,7 @@ void ShapesApp::BuildRenderItems()
     auto gridRitem = std::make_unique<RenderItem>();
     XMMATRIX gridWorld = XMMatrixIdentity();
 	
-    SetRenderItemInfo(*gridRitem, "grid",gridWorld);
+    SetRenderItemInfo(*gridRitem, "grid",gridWorld, "sand0");
 	mAllRitems.push_back(std::move(gridRitem));
 
     //tower objects
@@ -1084,14 +1112,14 @@ void ShapesApp::BuildRenderItems()
         XMMATRIX sphereWorld = XMMatrixScaling(0.3f, 0.3f, 0.3f) * XMMatrixTranslation(cRadius, 23.1f, sRadius);
         XMMATRIX flagWorld = XMMatrixScaling(1.5f, 1.0f, 0.1f) * XMMatrixTranslation(cRadius - 1, 22.5f, sRadius);
 
-        SetRenderItemInfo(*towerRitem, "cylinder", towerWorld);
+        SetRenderItemInfo(*towerRitem, "cylinder", towerWorld, "sand0");
 
-        SetRenderItemInfo(*poleRitem, "cylinder", poleWorld);
+        SetRenderItemInfo(*poleRitem, "cylinder", poleWorld, "bricks0");
 
 
-        SetRenderItemInfo(*flagRitem, "box", flagWorld);
+        SetRenderItemInfo(*flagRitem, "box", flagWorld, "stone0");
 
-        SetRenderItemInfo(*sphereRitem, "sphere", sphereWorld);
+        SetRenderItemInfo(*sphereRitem, "sphere", sphereWorld, "plastic0");
    
 
         mAllRitems.push_back(std::move(towerRitem));
@@ -1104,7 +1132,7 @@ void ShapesApp::BuildRenderItems()
         {
             auto roofRitem = std::make_unique<RenderItem>();
             XMMATRIX roofWorld = XMMatrixScaling(8.0f, 6.0f, 8.0f) * XMMatrixTranslation(cRadius, 17.0f, sRadius);
-            SetRenderItemInfo(*roofRitem, "cone", roofWorld);
+            SetRenderItemInfo(*roofRitem, "cone", roofWorld, "sand0");
             mAllRitems.push_back(std::move(roofRitem));
         }
     }
@@ -1113,12 +1141,12 @@ void ShapesApp::BuildRenderItems()
 
     auto paleRitem = std::make_unique<RenderItem>();
     XMMATRIX paleWorld = XMMatrixScaling(3.5f, 3.0f, 3.5f) * XMMatrixTranslation(w2, 17.5f, -d2);
-    SetRenderItemInfo(*paleRitem, "cylinder2", paleWorld);
+    SetRenderItemInfo(*paleRitem, "cylinder2", paleWorld, "plastic0");
     mAllRitems.push_back(std::move(paleRitem));
 
     auto torusRitem = std::make_unique<RenderItem>();
     XMMATRIX torusWorld = XMMatrixScaling(1.8f, 2.0f, 1.8f) * XMMatrixTranslation(w2, 14.5f, -d2);
-    SetRenderItemInfo(*torusRitem, "torus2", torusWorld);
+    SetRenderItemInfo(*torusRitem, "torus2", torusWorld, "plastic0");
     mAllRitems.push_back(std::move(torusRitem));
 
 
@@ -1136,14 +1164,14 @@ void ShapesApp::BuildRenderItems()
             auto boxRitem = std::make_unique<RenderItem>();
             XMMATRIX world = XMMatrixScaling(1.0f, 10.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 5.0f, sRadius);
            
-            SetRenderItemInfo(*boxRitem, "box", world);
+            SetRenderItemInfo(*boxRitem, "box", world, "bricks0");
             mAllRitems.push_back(std::move(boxRitem));
         }
         //the prism along the top of the walls
         auto prismRitem = std::make_unique<RenderItem>();
         XMMATRIX PrismWorld = XMMatrixScaling(1.0f, 4.0f, width - 3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius);
        
-        SetRenderItemInfo(*prismRitem, "prism", PrismWorld);
+        SetRenderItemInfo(*prismRitem, "prism", PrismWorld, "stone0");
         mAllRitems.push_back(std::move(prismRitem));
 
         int mogulsNum = 50;
@@ -1160,7 +1188,7 @@ void ShapesApp::BuildRenderItems()
             {
                  MogulWorld = XMMatrixScaling(2.0f, 1.0f, 1.0)* XMMatrixRotationY(theta)* XMMatrixTranslation((cRadius-25) + j, 12.8f, sRadius );
             }
-            SetRenderItemInfo(*boxRitem, "box", MogulWorld);
+            SetRenderItemInfo(*boxRitem, "box", MogulWorld, "stone0");
             mAllRitems.push_back(std::move(boxRitem));
         }
             
@@ -1172,36 +1200,36 @@ void ShapesApp::BuildRenderItems()
     {
         auto boxRitem = std::make_unique<RenderItem>();
         XMMATRIX WallWorld = XMMatrixScaling(19.0f, 10.0f, 1.0f) * XMMatrixTranslation(-12.5f + i * 25.0f, 5.0f, -25.0f);
-        SetRenderItemInfo(*boxRitem, "box", WallWorld);
+        SetRenderItemInfo(*boxRitem, "box", WallWorld, "bricks0");
         mAllRitems.push_back(std::move(boxRitem));
     }
 
     auto pyramidRitem = std::make_unique<RenderItem>();
     XMMATRIX PyrWorld = XMMatrixScaling(21.0f, 6.0f, 21.0f) * XMMatrixTranslation(0.0f, 7.5f, 13.0f);
-    SetRenderItemInfo(*pyramidRitem, "pyramid", PyrWorld);
+    SetRenderItemInfo(*pyramidRitem, "pyramid", PyrWorld, "sand0");
     mAllRitems.push_back(std::move(pyramidRitem));
 
     auto diamondRitem = std::make_unique<RenderItem>();
     XMMATRIX DiamondWorld = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 13.0f, 13.0f);
-    SetRenderItemInfo(*diamondRitem, "diamond", DiamondWorld);
+    SetRenderItemInfo(*diamondRitem, "diamond", DiamondWorld, "plastic0");
     mAllRitems.push_back(std::move(diamondRitem));
 
     auto RingRitem = std::make_unique<RenderItem>();
     XMMATRIX RingWorld = XMMatrixScaling(0.5f, 0.5f, 0.5f) * XMMatrixRotationX(1.571) * XMMatrixTranslation(0.0f, 11.75f, 13.0f);
-    SetRenderItemInfo(*RingRitem, "torus", RingWorld);
+    SetRenderItemInfo(*RingRitem, "torus", RingWorld, "plastic0");
     mAllRitems.push_back(std::move(RingRitem));
     
     for (int i = 0; i < 2; i++)
     {
         auto wedgeRitem = std::make_unique<RenderItem>();
         XMMATRIX wedgeWorld = (XMMatrixRotationY(-thetaSquareStep) * XMMatrixScaling(3.0f, 3.0f, 18.0f) * XMMatrixTranslation(0.0f, 4.5f + i * -3, -3.5f + i * -31));
-        SetRenderItemInfo(*wedgeRitem, "wedge", wedgeWorld);
+        SetRenderItemInfo(*wedgeRitem, "wedge", wedgeWorld, "stone0");
         mAllRitems.push_back(std::move(wedgeRitem));
     }
 
     auto pathRitem = std::make_unique<RenderItem>();
     XMMATRIX pathWorld = XMMatrixScaling(6.0f, 3.0f, 13.0f)* XMMatrixTranslation( 0.0f, 1.5f, -19.0f);
-    SetRenderItemInfo(*pathRitem, "box", pathWorld);
+    SetRenderItemInfo(*pathRitem, "box", pathWorld, "stone0");
 
     mAllRitems.push_back(std::move(pathRitem));
 

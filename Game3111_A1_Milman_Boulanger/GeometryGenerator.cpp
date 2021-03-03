@@ -773,10 +773,10 @@ GeometryGenerator::MeshData GeometryGenerator::CreateWedge(float width, float he
 
 	//top/left face
 	normal = getNormal({ -w2, -h2, d2 }, { +w2, h2, d2 }, { +w2, h2, -d2 });
-	v[10] = Vertex(-w2, -h2, d2, normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 1.0f);
-	v[11] = Vertex(+w2, h2, d2,  normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 0.0f, 0.0f);
-	v[12] = Vertex(+w2, h2, -d2, normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 0.0f);
-	v[13] = Vertex(-w2, -h2, -d2,normal.x, normal.y, -normal.z, tangent.x, tangent.y, tangent.z, 1.0f, 1.0f);
+	v[10] = Vertex(-w2, -h2, d2, normal.x, normal.y, -normal.z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[11] = Vertex(+w2, h2, d2,  normal.x, normal.y, -normal.z, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[12] = Vertex(+w2, h2, -d2, normal.x, normal.y, -normal.z, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+	v[13] = Vertex(-w2, -h2, -d2,normal.x, normal.y, -normal.z, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f);
 
 	//right face 
 	v[14] = Vertex(w2, +h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
