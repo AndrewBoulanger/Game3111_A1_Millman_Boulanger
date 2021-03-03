@@ -452,12 +452,20 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 
     //lights
 	mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.25f, 1.0f };
+    //directional light
 	mMainPassCB.Lights[0].Direction = { -0.5f, -0.35f, 0.5f };
 	mMainPassCB.Lights[0].Strength = { 0.65f, 0.35, 0.0f };
-	mMainPassCB.Lights[1].Direction = { -0.57735f, -0.57735f, 0.57735f };
-	mMainPassCB.Lights[1].Strength = { 0.0f, 0.0f, 0.0f };
-	mMainPassCB.Lights[2].Direction = { 0.0f, -0.707f, -0.707f };
-	mMainPassCB.Lights[2].Strength = { 0.0f, 0.0f, 0.0f };
+    //pointlights
+    mMainPassCB.Lights[1].Position = { -5.0f, 5.0f, -26.0f };
+	mMainPassCB.Lights[1].Strength = { 1.0f, 1.0f, 0.0f };
+    mMainPassCB.Lights[2].Position = { 5.0f, 5.0f, -26.0f };
+	mMainPassCB.Lights[2].Strength = { 1.0f, 1.0f, 0.0f };
+    //spotlight
+    mMainPassCB.Lights[3].Position = { 0.0f, 22.0f, 10.0f };
+    mMainPassCB.Lights[3].Direction = { 0.0f, -1.0f, 0.0f };
+    mMainPassCB.Lights[3].SpotPower =  1.0f;
+    mMainPassCB.Lights[3].Strength = { 2.1f, 2.1f, 2.1f };
+    mMainPassCB.Lights[3].FalloffEnd = 20.0f;
 
 	auto currPassCB = mCurrFrameResource->PassCB.get();
 	currPassCB->CopyData(0, mMainPassCB);

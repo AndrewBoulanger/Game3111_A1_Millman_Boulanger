@@ -932,11 +932,14 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 			v.Position.z = ringRadius * s + tubeRadius * sinf(phi) * s;
 
 			// Partial derivative of P with respect to theta
-			v.TangentU.x = -tubeRadius * sinf(phi) * sinf(theta);
+			v.TangentU.x = -(ringRadius + tubeRadius * sinf(phi)) * sinf(theta);
 			v.TangentU.y = 0.0f;
-			v.TangentU.z = tubeRadius * sinf(phi) * cosf(theta);
+			v.TangentU.z = (ringRadius + tubeRadius * sinf(phi)) * cosf(theta);
+
+			XMVECTOR TangentV = { tubeRadius * cos(phi) * c, tubeRadius * cos(phi) * s, tubeRadius * sin(phi) };
 
 			XMVECTOR T = XMLoadFloat3(&v.TangentU);
+
 			XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
 
 			XMVECTOR p = XMLoadFloat3(&v.Position);
@@ -970,15 +973,15 @@ GeometryGenerator::MeshData GeometryGenerator::CreateTorus(float tubeRadius, flo
 			v.Position.z = ringRadius * s - tubeRadius * sinf(phi) * s;
 
 			// Partial derivative of P with respect to theta
-			v.TangentU.x = -tubeRadius * sinf(phi) * s;
+			v.TangentU.x = -(ringRadius - tubeRadius * sinf(phi)) * s;
 			v.TangentU.y = 0.0f;
-			v.TangentU.z = +tubeRadius * sinf(phi) * c;
+			v.TangentU.z = (ringRadius - tubeRadius * sinf(phi)) * c;
 
 			XMVECTOR T = XMLoadFloat3(&v.TangentU);
 			XMStoreFloat3(&v.TangentU, XMVector3Normalize(T));
 
 			XMVECTOR p = XMLoadFloat3(&v.Position);
-			XMStoreFloat3(&v.Normal, XMVector3Normalize(p));
+			XMStoreFloat3(&v.Normal, XMVector3Normalize(-p));
 
 			v.TexC.x = theta / XM_2PI;
 			v.TexC.y = phi / XM_PI;
@@ -1197,7 +1200,7 @@ GeometryGenerator::MeshData GeometryGenerator::CreateDiamond(float midRadius, fl
 
 			vertex.Position = XMFLOAT3(r * c, y, r * s);
 
-			vertex.TexC.x = (float)(j -1) / sliceCount;
+			vertex.TexC.x = (float)(j) / sliceCount;
 			vertex.TexC.y = 1.0f - (float)i / stackCount;
 
 

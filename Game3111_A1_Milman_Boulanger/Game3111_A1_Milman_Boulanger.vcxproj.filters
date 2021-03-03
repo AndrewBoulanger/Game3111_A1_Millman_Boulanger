@@ -53,12 +53,6 @@
     <FxCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Week5\LitSkull\Shaders\LightingUtil.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\PS_Anisotropic.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\VS_Anisotropic.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
