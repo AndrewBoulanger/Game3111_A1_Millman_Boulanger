@@ -701,7 +701,8 @@ void ShapesApp::BuildShapeGeometry()
 {
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
-	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth, 60, 40);
+	//GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
+    GeometryGenerator::MeshData grid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -1201,6 +1202,48 @@ void ShapesApp::BuildRenderItems()
         }
             
     
+    }
+    //moat walls / outer walls
+
+    for (int i = 0; i < 4; i++)
+    {
+        float theta = i * thetaSquareStep;
+        float sRadius = w2 * sinf(theta);
+        float cRadius = w2 * cosf(theta);
+
+        
+            auto boxRitem = std::make_unique<RenderItem>();
+            XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2 , 5.0f, sRadius *2);
+
+            SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0");
+            mAllRitems.push_back(std::move(boxRitem));
+        
+        //the prism along the top of the walls
+        auto prismRitem = std::make_unique<RenderItem>();
+        XMMATRIX PrismWorld = XMMatrixScaling(1.0f, 4.0f, width - 3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius);
+
+        SetRenderItemInfo(*prismRitem, "prism", PrismWorld, "stone0");
+        mAllRitems.push_back(std::move(prismRitem));
+
+        int mogulsNum = 50;
+        for (int j = 0; j < mogulsNum; j += 2) //changed for the loop to increment by 2 to make nesting a little clearer to read, also less division
+        {
+
+            auto boxRitem = std::make_unique<RenderItem>();
+            XMMATRIX MogulWorld;
+            if (theta == XM_PI || theta == 0)
+            {
+                MogulWorld = XMMatrixScaling(2.0f, 1.0f, 1.0) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 12.8f, (sRadius - 25) + j);
+            }
+            else
+            {
+                MogulWorld = XMMatrixScaling(2.0f, 1.0f, 1.0) * XMMatrixRotationY(theta) * XMMatrixTranslation((cRadius - 25) + j, 12.8f, sRadius);
+            }
+            SetRenderItemInfo(*boxRitem, "box", MogulWorld, "stone0");
+            mAllRitems.push_back(std::move(boxRitem));
+        }
+
+
     }
 
     //smaller, front walls
