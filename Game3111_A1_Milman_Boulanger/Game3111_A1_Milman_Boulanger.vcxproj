@@ -154,7 +154,10 @@
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
     <ClCompile Include="MathHelper.cpp" />
-    <ClCompile Include="Week4-1-ShapesAppUsingDescriptorTable.cpp" />
+    <ClCompile Include="Week4-1-ShapesAppUsingDescriptorTable.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\..\..\..\Downloads\DirectX-master\DirectX-master\Week5\LitSkull\Shaders\LightingUtil.hlsl">
