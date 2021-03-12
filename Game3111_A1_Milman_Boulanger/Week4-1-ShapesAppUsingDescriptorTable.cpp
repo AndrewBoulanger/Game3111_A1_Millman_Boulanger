@@ -108,6 +108,10 @@ private:
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
  
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
+
+	float GetHillsHeight(float x, float z)const;
+	XMFLOAT3 GetHillsNormal(float x, float z)const;
+
 private:
 
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
@@ -972,9 +976,11 @@ void ShapesApp::BuildShapeGeometry()
 	}
     for (size_t i = 0; i < moatgrid.Vertices.size(); ++i, ++k)
     {
-        vertices[k].Pos = moatgrid.Vertices[i].Position;
-        vertices[k].Normal = moatgrid.Vertices[i].Normal;
-        vertices[k].TexC = moatgrid.Vertices[i].TexC;
+		auto& p = moatgrid.Vertices[i].Position;
+		vertices[k].Pos = p;
+		vertices[k].Pos.y = GetHillsHeight(p.x, p.z);
+		vertices[k].Normal = GetHillsNormal(p.x, p.z);
+		vertices[k].TexC = moatgrid.Vertices[i].TexC;
     }
 
 	for(size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
@@ -1580,3 +1586,21 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> ShapesApp::GetStaticSamplers()
 }
 
 
+float ShapesApp::GetHillsHeight(float x, float z)const
+{
+	return 0.1f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
+}
+
+XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
+{
+	// n = (-df/dx, 1, -df/dz)
+	XMFLOAT3 n(
+		-0.03f * z * cosf(0.1f * x) - 0.1f * cosf(0.1f * z),
+		1.0f,
+		-0.1f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z));
+
+	XMVECTOR unitNormal = XMVector3Normalize(XMLoadFloat3(&n));
+	XMStoreFloat3(&n, unitNormal);
+
+	return n;
+}
