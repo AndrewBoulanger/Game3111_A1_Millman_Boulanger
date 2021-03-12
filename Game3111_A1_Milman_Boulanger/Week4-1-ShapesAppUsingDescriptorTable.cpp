@@ -701,8 +701,8 @@ void ShapesApp::BuildShapeGeometry()
 {
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
-	//GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
-    GeometryGenerator::MeshData grid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
+	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
+    GeometryGenerator::MeshData moatgrid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -723,7 +723,8 @@ void ShapesApp::BuildShapeGeometry()
 	// Cache the vertex offsets to each object in the concatenated vertex buffer.
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
-	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
+    UINT moatgridVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
+    UINT sphereVertexOffset = moatgridVertexOffset + (UINT)moatgrid.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
     UINT coneVertexOffset = cylinderVertexOffset + (UINT)cylinder.Vertices.size();
     UINT triPrismVertexOffset = coneVertexOffset + (UINT)cone.Vertices.size();
@@ -738,7 +739,8 @@ void ShapesApp::BuildShapeGeometry()
 	// Cache the starting index for each object in the concatenated index buffer.
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
-	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
+	UINT moatgridIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
+    UINT sphereIndexOffset = moatgridIndexOffset + (UINT)moatgrid.Indices32.size();
 	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
     UINT coneIndexOffset = cylinderIndexOffset + (UINT)cylinder.Indices32.size();
     UINT triPrismIndexOffset = coneIndexOffset + (UINT)cone.Indices32.size();
@@ -767,6 +769,11 @@ void ShapesApp::BuildShapeGeometry()
 	gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
 	gridSubmesh.StartIndexLocation = gridIndexOffset;
 	gridSubmesh.BaseVertexLocation = gridVertexOffset;
+
+    SubmeshGeometry moatgridSubmesh;
+    moatgridSubmesh.IndexCount = (UINT)moatgrid.Indices32.size();
+    moatgridSubmesh.StartIndexLocation = moatgridIndexOffset;
+    moatgridSubmesh.BaseVertexLocation = moatgridVertexOffset;
 
 	SubmeshGeometry sphereSubmesh;
 	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
@@ -826,6 +833,7 @@ void ShapesApp::BuildShapeGeometry()
     auto totalVertexCount =
         box.Vertices.size() +
         grid.Vertices.size() +
+        moatgrid.Vertices.size() +
         sphere.Vertices.size() +
         cylinder.Vertices.size() +
         cone.Vertices.size() +
@@ -854,6 +862,12 @@ void ShapesApp::BuildShapeGeometry()
 		vertices[k].Normal = grid.Vertices[i].Normal;
 		vertices[k].TexC = grid.Vertices[i].TexC;
 	}
+    for (size_t i = 0; i < moatgrid.Vertices.size(); ++i, ++k)
+    {
+        vertices[k].Pos = moatgrid.Vertices[i].Position;
+        vertices[k].Normal = moatgrid.Vertices[i].Normal;
+        vertices[k].TexC = moatgrid.Vertices[i].TexC;
+    }
 
 	for(size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
 	{
@@ -930,6 +944,7 @@ void ShapesApp::BuildShapeGeometry()
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
 	indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
+    indices.insert(indices.end(), std::begin(moatgrid.GetIndices16()), std::end(moatgrid.GetIndices16()));
 	indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
 	indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 	indices.insert(indices.end(), std::begin(cone.GetIndices16()), std::end(cone.GetIndices16()));
@@ -967,6 +982,7 @@ void ShapesApp::BuildShapeGeometry()
 
 	geo->DrawArgs["box"] = boxSubmesh;
 	geo->DrawArgs["grid"] = gridSubmesh;
+    geo->DrawArgs["moatgrid"] = moatgridSubmesh;
 	geo->DrawArgs["sphere"] = sphereSubmesh;
 	geo->DrawArgs["cylinder"] = cylinderSubmesh;
 	geo->DrawArgs["cone"] = coneSubmesh;
@@ -1099,10 +1115,12 @@ void ShapesApp::BuildRenderItems()
 
     auto gridRitem = std::make_unique<RenderItem>();
     XMMATRIX gridWorld = XMMatrixIdentity();
+
 	
     SetRenderItemInfo(*gridRitem, "grid",gridWorld, "sand0");
 	mAllRitems.push_back(std::move(gridRitem));
 
+   
     //tower objects
     for (int i = 0; i < 4; ++i)
     {
@@ -1183,6 +1201,9 @@ void ShapesApp::BuildRenderItems()
         SetRenderItemInfo(*prismRitem, "prism", PrismWorld, "stone0");
         mAllRitems.push_back(std::move(prismRitem));
 
+
+ 
+
         int mogulsNum = 50;
         for (int j =0; j < mogulsNum; j+= 2) //changed for the loop to increment by 2 to make nesting a little clearer to read, also less division
         {
@@ -1213,7 +1234,7 @@ void ShapesApp::BuildRenderItems()
 
         
             auto boxRitem = std::make_unique<RenderItem>();
-            XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2 , 5.0f, sRadius *2);
+            XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 4.0f, sRadius *2);
 
             SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0");
             mAllRitems.push_back(std::move(boxRitem));
@@ -1224,6 +1245,13 @@ void ShapesApp::BuildRenderItems()
 
         SetRenderItemInfo(*prismRitem, "prism", PrismWorld, "stone0");
         mAllRitems.push_back(std::move(prismRitem));
+
+        auto moatgridRitem = std::make_unique<RenderItem>();
+        XMMATRIX moatgridWorld = XMMatrixTranslation(0, -1, 0);
+
+        SetRenderItemInfo(*moatgridRitem, "moatgrid", moatgridWorld, "bricks0");
+        mAllRitems.push_back(std::move(moatgridRitem));
+
 
         int mogulsNum = 50;
         for (int j = 0; j < mogulsNum; j += 2) //changed for the loop to increment by 2 to make nesting a little clearer to read, also less division
