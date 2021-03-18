@@ -97,9 +97,10 @@ private:
     void LoadTextures();
     void BuildRootSignature();
     void BuildDescriptorHeaps();
-    void BuildConstantBufferViews();
+
     void BuildShadersAndInputLayout();
     void BuildShapeGeometry();
+	void BuildTreeSpritesGeometry();
     void BuildPSOs();
     void BuildFrameResources();
     void BuildMaterials();
@@ -209,11 +210,11 @@ bool ShapesApp::Initialize()
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildShapeGeometry();
+	BuildTreeSpritesGeometry();
     BuildMaterials();
     BuildRenderItems();
     BuildFrameResources();
     BuildDescriptorHeaps();
-    BuildConstantBufferViews();
     BuildPSOs();
 
     // Execute the initialization commands.
@@ -505,7 +506,7 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.AmbientLight = { 0.4f, 0.4f, 0.4f, 1.0f };
     //directional light
 	mMainPassCB.Lights[0].Direction = { -0.5f, -0.35f, 0.5f };
-	mMainPassCB.Lights[0].Strength = { 0.65f, 0.35, 0.0f };
+	mMainPassCB.Lights[0].Strength = { 0.8f, 0.5, 0.3f };
     //pointlights
     mMainPassCB.Lights[1].Position = { -5.0f, 5.0f, -26.0f };
 	mMainPassCB.Lights[1].Strength = { 1.0f, 1.0f, 0.0f };
@@ -573,6 +574,20 @@ void ShapesApp::LoadTextures()
 		mCommandList.Get(), flagTex->Filename.c_str(),
         flagTex->Resource, flagTex->UploadHeap));
 
+	auto fenceTex = std::make_unique<Texture>();
+	fenceTex->Name = "fenceTex";
+	fenceTex->Filename = L"Textures/WireFence.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), fenceTex->Filename.c_str(),
+		fenceTex->Resource, fenceTex->UploadHeap));
+
+	auto treeArrayTex = std::make_unique<Texture>();
+	treeArrayTex->Name = "treeArrayTex";
+	treeArrayTex->Filename = L"Textures/treeArray.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), treeArrayTex->Filename.c_str(),
+		treeArrayTex->Resource, treeArrayTex->UploadHeap));
+
 
 	mTextures[bricksTex->Name] = std::move(bricksTex);
 	mTextures[stoneTex->Name] = std::move(stoneTex);
@@ -581,6 +596,8 @@ void ShapesApp::LoadTextures()
 	mTextures[iceTex->Name] = std::move(iceTex);
 	mTextures[redTex->Name] = std::move(redTex);
 	mTextures[flagTex->Name] = std::move(flagTex);
+	mTextures[fenceTex->Name] = std::move(fenceTex);
+	mTextures[treeArrayTex->Name] = std::move(treeArrayTex);
 }
 
 //If we have 3 frame resources and n render items, then we have three 3n object constant
@@ -589,24 +606,11 @@ void ShapesApp::LoadTextures()
 
 void ShapesApp::BuildDescriptorHeaps()
 {
-    //UINT objCount = (UINT)mOpaqueRitems.size();
-
-    //UINT numDescriptors = (objCount + 1) * gNumFrameResources;
-
-    //mPassCbvOffset = objCount * gNumFrameResources;
-
-    //D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    //cbvHeapDesc.NumDescriptors = numDescriptors;
-    //cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    //cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    //cbvHeapDesc.NodeMask = 0;
-    //ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
-
 	//
 	// Create the SRV heap.
 	//
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 7;
+	srvHeapDesc.NumDescriptors = 9;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
@@ -623,6 +627,8 @@ void ShapesApp::BuildDescriptorHeaps()
 	auto waterTex = mTextures["waterTex"]->Resource;
 	auto iceTex = mTextures["iceTex"]->Resource;
 	auto flagTex = mTextures["flagTex"]->Resource;
+	auto fenceTex = mTextures["fenceTex"]->Resource;
+	auto treeArrayTex = mTextures["treeArrayTex"]->Resource;
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -675,69 +681,26 @@ void ShapesApp::BuildDescriptorHeaps()
 	srvDesc.Format = flagTex->GetDesc().Format;
 	srvDesc.Texture2D.MipLevels = flagTex->GetDesc().MipLevels;
 	md3dDevice->CreateShaderResourceView(flagTex.Get(), &srvDesc, hDescriptor);
+
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	srvDesc.Format = fenceTex->GetDesc().Format;
+	md3dDevice->CreateShaderResourceView(fenceTex.Get(), &srvDesc, hDescriptor);
+
+	// next descriptor
+	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	auto desc = treeArrayTex->GetDesc();
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+	srvDesc.Format = treeArrayTex->GetDesc().Format;
+	srvDesc.Texture2DArray.MostDetailedMip = 0;
+	srvDesc.Texture2DArray.MipLevels = -1;
+	srvDesc.Texture2DArray.FirstArraySlice = 0;
+	srvDesc.Texture2DArray.ArraySize = treeArrayTex->GetDesc().DepthOrArraySize;
+	md3dDevice->CreateShaderResourceView(treeArrayTex.Get(), &srvDesc, hDescriptor);
 }
 
-//assuming we have n renter items, we can populate the CBV heap with the following code where descriptors 0 to n-
-//1 contain the object CBVs for the 0th frame resource, descriptors n to 2n−1 contains the
-//object CBVs for 1st frame resource, descriptors 2n to 3n−1 contain the objects CBVs for
-//the 2nd frame resource, and descriptors 3n, 3n + 1, and 3n + 2 contain the pass CBVs for the
-//0th, 1st, and 2nd frame resource
-void ShapesApp::BuildConstantBufferViews()
-{
-   // UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-
-   // UINT objCount = (UINT)mOpaqueRitems.size();
-
-   // // Need a CBV descriptor for each object for each frame resource.
-   // for(int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
-   // {
-   //     auto objectCB = mFrameResources[frameIndex]->ObjectCB->Resource();
-   //     for(UINT i = 0; i < objCount; ++i)
-   //     {
-   //         D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
-
-   //         // Offset to the ith object constant buffer in the buffer.
-   //         cbAddress += i*objCBByteSize;
-
-   //         // Offset to the object cbv in the descriptor heap.
-   //         int heapIndex = frameIndex*objCount + i;
-
-			////we can get a handle to the first descriptor in a heap with the ID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart
-   //         auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-
-			////our heap has more than one descriptor,we need to know the size to increment in the heap to get to the next descriptor
-			////This is hardware specific, so we have to query this information from the device, and it depends on
-			////the heap type.Recall that our D3DApp class caches this information: 	mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-   //         handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
-
-   //         D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-   //         cbvDesc.BufferLocation = cbAddress;
-   //         cbvDesc.SizeInBytes = objCBByteSize;
-
-   //         md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-   //     }
-   // }
-
-   // UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
-
-   // // Last three descriptors are the pass CBVs for each frame resource.
-   // for(int frameIndex = 0; frameIndex < gNumFrameResources; ++frameIndex)
-   // {
-   //     auto passCB = mFrameResources[frameIndex]->PassCB->Resource();
-   //     D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
-
-   //     // Offset to the pass cbv in the descriptor heap.
-   //     int heapIndex = mPassCbvOffset + frameIndex;
-   //     auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mCbvHeap->GetCPUDescriptorHandleForHeapStart());
-   //     handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
-
-   //     D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-   //     cbvDesc.BufferLocation = cbAddress;
-   //     cbvDesc.SizeInBytes = passCBByteSize;
-   //     
-   //     md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-   // }
-}
 
 //A root signature defines what resources need to be bound to the pipeline before issuing a draw call and
 //how those resources get mapped to shader input registers. there is a limit of 64 DWORDs that can be put in a root signature.
@@ -786,13 +749,25 @@ void ShapesApp::BuildRootSignature()
 
 void ShapesApp::BuildShadersAndInputLayout()
 {
+		const D3D_SHADER_MACRO defines[] =
+	{
+		"FOG", "1",
+		NULL, NULL
+	};
+
+	const D3D_SHADER_MACRO alphaTestDefines[] =
+	{
+		"FOG", "1",
+		"ALPHA_TEST", "1",
+		NULL, NULL
+	};
 	mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_1");
-	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_1");
-	mShaders["alphaTestedPS"] = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_1");
+	mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\color.hlsl", defines, "PS", "ps_5_1");
+	mShaders["alphaTestedPS"] = d3dUtil::CompileShader(L"Shaders\\color.hlsl", alphaTestDefines, "PS", "ps_5_1");
 
 	mShaders["treeSpriteVS"] = d3dUtil::CompileShader(L"Shaders\\TreeSprite.hlsl", nullptr, "VS", "vs_5_1");
 	mShaders["treeSpriteGS"] = d3dUtil::CompileShader(L"Shaders\\TreeSprite.hlsl", nullptr, "GS", "gs_5_1");
-	mShaders["treeSpritePS"] = d3dUtil::CompileShader(L"Shaders\\TreeSprite.hlsl", nullptr, "PS", "ps_5_1");
+	mShaders["treeSpritePS"] = d3dUtil::CompileShader(L"Shaders\\TreeSprite.hlsl", alphaTestDefines, "PS", "ps_5_1");
 	
 	mStdInputLayout =
 	{
@@ -1111,6 +1086,69 @@ void ShapesApp::BuildShapeGeometry()
 	mGeometries[geo->Name] = std::move(geo);
 }
 
+void ShapesApp::BuildTreeSpritesGeometry()
+{
+	//step5
+	struct TreeSpriteVertex
+	{
+		XMFLOAT3 Pos;
+		XMFLOAT2 Size;
+	};
+
+	static const int treeCount = 16;
+	std::array<TreeSpriteVertex, 16> vertices;
+	for(UINT i = 0; i < treeCount; ++i)
+	{
+		float x = MathHelper::RandF(-45.0f, 45.0f);
+		float z = MathHelper::RandF(-45.0f, 45.0f);
+		float y = GetHillsHeight(x, z);
+
+		// Move tree slightly above land height.
+		y += 8.0f;
+
+		vertices[i].Pos = XMFLOAT3(x, y, z);
+		vertices[i].Size = XMFLOAT2(20.0f, 20.0f);
+	}
+
+	std::array<std::uint16_t, 16> indices =
+	{
+		0, 1, 2, 3, 4, 5, 6, 7,
+		8, 9, 10, 11, 12, 13, 14, 15
+	};
+
+	const UINT vbByteSize = (UINT)vertices.size() * sizeof(TreeSpriteVertex);
+	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+
+	auto geo = std::make_unique<MeshGeometry>();
+	geo->Name = "treeSpritesGeo";
+
+	ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
+	CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+	geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
+
+	geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
+
+	geo->VertexByteStride = sizeof(TreeSpriteVertex);
+	geo->VertexBufferByteSize = vbByteSize;
+	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	geo->IndexBufferByteSize = ibByteSize;
+
+	SubmeshGeometry submesh;
+	submesh.IndexCount = (UINT)indices.size();
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+
+	geo->DrawArgs["points"] = submesh;
+
+	mGeometries["treeSpritesGeo"] = std::move(geo);
+}
+
 void ShapesApp::BuildPSOs()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
@@ -1234,7 +1272,7 @@ void ShapesApp::BuildMaterials()
 	stone0->Name = "stone0";
 	stone0->MatCBIndex = 1;
 	stone0->DiffuseSrvHeapIndex = 1;
-	stone0->DiffuseAlbedo = XMFLOAT4(0.5f, 0.5f, 1.0f, 1.0f);
+	stone0->DiffuseAlbedo = XMFLOAT4(0.8f, 0.8f, 1.0f, 1.0f);
 	stone0->FresnelR0 = XMFLOAT3(0.5f, 0.5f, 0.5f);
 	stone0->Roughness = 0.9f;
 
@@ -1278,6 +1316,22 @@ void ShapesApp::BuildMaterials()
 	flag0->FresnelR0 = XMFLOAT3(0.95f, 0.95f, 0.95f);
 	flag0->Roughness = 0.9f;
 
+	auto wirefence = std::make_unique<Material>();
+	wirefence->Name = "wirefence";
+	wirefence->MatCBIndex = 7;
+	wirefence->DiffuseSrvHeapIndex = 7;
+	wirefence->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	wirefence->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+	wirefence->Roughness = 0.25f;
+
+	auto treeSprites = std::make_unique<Material>();
+	treeSprites->Name = "treeSprites";
+	treeSprites->MatCBIndex = 8;
+	treeSprites->DiffuseSrvHeapIndex = 8;
+	treeSprites->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	treeSprites->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
+	treeSprites->Roughness = 0.125f;
+
 
 	mMaterials["bricks0"] = std::move(bricks0);
 	mMaterials["stone0"] = std::move(stone0);
@@ -1286,6 +1340,8 @@ void ShapesApp::BuildMaterials()
 	mMaterials["water0"] = std::move(Water0);
 	mMaterials["sand0"] = std::move(sand0);
 	mMaterials["flag0"] = std::move(flag0);
+	mMaterials["wirefence"] = std::move(wirefence);
+	mMaterials["treeSprites"] = std::move(treeSprites);
 }
 
 //makes building render items simpler, reduces repeated chunks of code
@@ -1489,8 +1545,29 @@ void ShapesApp::BuildRenderItems()
     auto pathRitem = std::make_unique<RenderItem>();
     XMMATRIX pathWorld = XMMatrixScaling(6.0f, 3.0f, 13.0f)* XMMatrixTranslation( 0.0f, 1.5f, -19.0f);
     SetRenderItemInfo(*pathRitem, "box", pathWorld, "stone0", RenderLayer::Opaque);
+	 mAllRitems.push_back(std::move(pathRitem));
 
-    mAllRitems.push_back(std::move(pathRitem));
+	 auto boxRitem = std::make_unique<RenderItem>();
+	 XMMATRIX boxWorld = XMMatrixScaling(6.0f, 6.0f, 2.0f)* XMMatrixTranslation( 0.0f, 5.5f, -25.0f);
+	SetRenderItemInfo(*boxRitem, "box", boxWorld, "wirefence", RenderLayer::AlphaTested );
+
+	mAllRitems.push_back(std::move(boxRitem));
+	
+	auto treeSpritesRitem = std::make_unique<RenderItem>();
+	treeSpritesRitem->World = MathHelper::Identity4x4();
+	treeSpritesRitem->ObjCBIndex = objCBIndex++;
+	treeSpritesRitem->Mat = mMaterials["treeSprites"].get();
+	treeSpritesRitem->Geo = mGeometries["treeSpritesGeo"].get();
+	//step2
+	treeSpritesRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	treeSpritesRitem->IndexCount = treeSpritesRitem->Geo->DrawArgs["points"].IndexCount;
+	treeSpritesRitem->StartIndexLocation = treeSpritesRitem->Geo->DrawArgs["points"].StartIndexLocation;
+	treeSpritesRitem->BaseVertexLocation = treeSpritesRitem->Geo->DrawArgs["points"].BaseVertexLocation;
+
+	mRitemLayer[(int)RenderLayer::AlphaTestedTreeSprites].push_back(treeSpritesRitem.get());
+	mAllRitems.push_back(std::move(treeSpritesRitem));
+
+
 
 }
 
