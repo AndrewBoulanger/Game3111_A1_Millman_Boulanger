@@ -789,7 +789,7 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
-    GeometryGenerator::MeshData moatgrid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
+    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -798,7 +798,6 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(1, 1, 1 );
     GeometryGenerator::MeshData torus = geoGen.CreateTorus(0.3f, 2.0f, 30, 30);
     GeometryGenerator::MeshData wedge = geoGen.CreateWedge(1.0f, 1.0f, 2.0f);
-    //GeometryGenerator::MeshData halfsphere = geoGen.CreateHalfSphere(0.5f, 20, 20);
     GeometryGenerator::MeshData torus2 = geoGen.CreateTorus(0.3f, 2.0f, 20, 20);
     GeometryGenerator::MeshData cylinder2 = geoGen.CreateCylinder(1.0f, 0.5f, 2.0f, 20, 20);
 
@@ -810,8 +809,8 @@ void ShapesApp::BuildShapeGeometry()
 	// Cache the vertex offsets to each object in the concatenated vertex buffer.
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
-    UINT moatgridVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
-    UINT sphereVertexOffset = moatgridVertexOffset + (UINT)moatgrid.Vertices.size();
+    UINT sandDunesVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
+    UINT sphereVertexOffset = sandDunesVertexOffset + (UINT)sandDunes.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
     UINT coneVertexOffset = cylinderVertexOffset + (UINT)cylinder.Vertices.size();
     UINT triPrismVertexOffset = coneVertexOffset + (UINT)cone.Vertices.size();
@@ -819,15 +818,14 @@ void ShapesApp::BuildShapeGeometry()
     UINT pyramidVertexOffset = diamondVertexOffset + (UINT)diamond.Vertices.size();
     UINT torusVertexOffset = pyramidVertexOffset + (UINT)pyramid.Vertices.size();
     UINT wedgeVertexOffset = torusVertexOffset + (UINT)torus.Vertices.size();
-    //UINT halfsphereVertexOffset = wedgeVertexOffset + (UINT)wedge.Vertices.size();
     UINT torus2VertexOffset = wedgeVertexOffset + (UINT)wedge.Vertices.size();
     UINT cylinder2VertexOffset = torus2VertexOffset + (UINT)torus2.Vertices.size();
     
 	// Cache the starting index for each object in the concatenated index buffer.
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
-	UINT moatgridIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
-    UINT sphereIndexOffset = moatgridIndexOffset + (UINT)moatgrid.Indices32.size();
+	UINT sandDunesIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
+    UINT sphereIndexOffset = sandDunesIndexOffset + (UINT)sandDunes.Indices32.size();
 	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
     UINT coneIndexOffset = cylinderIndexOffset + (UINT)cylinder.Indices32.size();
     UINT triPrismIndexOffset = coneIndexOffset + (UINT)cone.Indices32.size();
@@ -838,7 +836,6 @@ void ShapesApp::BuildShapeGeometry()
     UINT torus2IndexOffset = wedgeIndexOffset + (UINT)wedge.Indices32.size(); 
     UINT cylinder2IndexOffset = torus2IndexOffset + (UINT)torus2.Indices32.size();
 
-   // UINT halfsphereIndexOffset = wedgeIndexOffset + (UINT)wedge.Indices32.size();
     // Define the SubmeshGeometry that cover different 
     // regions of the vertex/index buffers.
 
@@ -857,20 +854,15 @@ void ShapesApp::BuildShapeGeometry()
 	gridSubmesh.StartIndexLocation = gridIndexOffset;
 	gridSubmesh.BaseVertexLocation = gridVertexOffset;
 
-    SubmeshGeometry moatgridSubmesh;
-    moatgridSubmesh.IndexCount = (UINT)moatgrid.Indices32.size();
-    moatgridSubmesh.StartIndexLocation = moatgridIndexOffset;
-    moatgridSubmesh.BaseVertexLocation = moatgridVertexOffset;
+    SubmeshGeometry sandDunesSubmesh;
+    sandDunesSubmesh.IndexCount = (UINT)sandDunes.Indices32.size();
+    sandDunesSubmesh.StartIndexLocation = sandDunesIndexOffset;
+    sandDunesSubmesh.BaseVertexLocation = sandDunesVertexOffset;
 
 	SubmeshGeometry sphereSubmesh;
 	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
 	sphereSubmesh.StartIndexLocation = sphereIndexOffset;
 	sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
-
-   /* SubmeshGeometry halfsphereSubmesh;
-    halfsphereSubmesh.IndexCount = (UINT)halfsphere.Indices32.size();
-    halfsphereSubmesh.StartIndexLocation = halfsphereIndexOffset;
-    halfsphereSubmesh.BaseVertexLocation = halfsphereVertexOffset;*/
 
 	SubmeshGeometry cylinderSubmesh;
 	cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
@@ -920,7 +912,7 @@ void ShapesApp::BuildShapeGeometry()
     auto totalVertexCount =
         box.Vertices.size() +
         grid.Vertices.size() +
-        moatgrid.Vertices.size() +
+        sandDunes.Vertices.size() +
         sphere.Vertices.size() +
         cylinder.Vertices.size() +
         cone.Vertices.size() +
@@ -949,13 +941,13 @@ void ShapesApp::BuildShapeGeometry()
 		vertices[k].Normal = grid.Vertices[i].Normal;
 		vertices[k].TexC = grid.Vertices[i].TexC;
 	}
-    for (size_t i = 0; i < moatgrid.Vertices.size(); ++i, ++k)
+    for (size_t i = 0; i < sandDunes.Vertices.size(); ++i, ++k)
     {
-		auto& p = moatgrid.Vertices[i].Position;
+		auto& p = sandDunes.Vertices[i].Position;
 		vertices[k].Pos = p;
 		vertices[k].Pos.y = GetHillsHeight(p.x, p.z);
 		vertices[k].Normal = GetHillsNormal(p.x, p.z);
-		vertices[k].TexC = moatgrid.Vertices[i].TexC;
+		vertices[k].TexC = sandDunes.Vertices[i].TexC;
     }
 
 	for(size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
@@ -1024,16 +1016,12 @@ void ShapesApp::BuildShapeGeometry()
 		 vertices[k].Normal = cylinder2.Vertices[i].Normal;
 		 vertices[k].TexC = cylinder2.Vertices[i].TexC;
      }
-     /*for (size_t i = 0; i < halfsphere.Vertices.size(); ++i, ++k)
-     {
-         vertices[k].Pos = halfsphere.Vertices[i].Position;
-         vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
-     }*/
+
 
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
 	indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
-    indices.insert(indices.end(), std::begin(moatgrid.GetIndices16()), std::end(moatgrid.GetIndices16()));
+    indices.insert(indices.end(), std::begin(sandDunes.GetIndices16()), std::end(sandDunes.GetIndices16()));
 	indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
 	indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 	indices.insert(indices.end(), std::begin(cone.GetIndices16()), std::end(cone.GetIndices16()));
@@ -1044,7 +1032,7 @@ void ShapesApp::BuildShapeGeometry()
     indices.insert(indices.end(), std::begin(wedge.GetIndices16()), std::end(wedge.GetIndices16()));
     indices.insert(indices.end(), std::begin(torus2.GetIndices16()), std::end(torus2.GetIndices16()));
     indices.insert(indices.end(), std::begin(cylinder2.GetIndices16()), std::end(cylinder2.GetIndices16()));
-    //indices.insert(indices.end(), std::begin(halfsphere.GetIndices16()), std::end(halfsphere.GetIndices16()));
+
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size()  * sizeof(std::uint16_t);
@@ -1071,7 +1059,7 @@ void ShapesApp::BuildShapeGeometry()
 
 	geo->DrawArgs["box"] = boxSubmesh;
 	geo->DrawArgs["grid"] = gridSubmesh;
-    geo->DrawArgs["moatgrid"] = moatgridSubmesh;
+    geo->DrawArgs["sandDunes"] = sandDunesSubmesh;
 	geo->DrawArgs["sphere"] = sphereSubmesh;
 	geo->DrawArgs["cylinder"] = cylinderSubmesh;
 	geo->DrawArgs["cone"] = coneSubmesh;
@@ -1097,10 +1085,10 @@ void ShapesApp::BuildTreeSpritesGeometry()
 
 	static const int treeCount = 16;
 	std::array<TreeSpriteVertex, 16> vertices;
-	for(UINT i = 0; i < treeCount; ++i)
+	for(UINT i = 0; i < treeCount/2; ++i)
 	{
-		float x = MathHelper::RandF(-45.0f, 45.0f);
-		float z = MathHelper::RandF(-45.0f, 45.0f);
+		float x = MathHelper::RandF(-46.0f, -38.0f);
+		float z = MathHelper::RandF(-44.0f, 44.0f);
 		float y = GetHillsHeight(x, z);
 
 		// Move tree slightly above land height.
@@ -1110,10 +1098,23 @@ void ShapesApp::BuildTreeSpritesGeometry()
 		vertices[i].Size = XMFLOAT2(20.0f, 20.0f);
 	}
 
+	for(UINT i = treeCount/2; i < treeCount; ++i)
+	{
+		float x = MathHelper::RandF(38.0f, 46.0f);
+		float z = MathHelper::RandF(-44.0f, 44.0f);
+		float y = GetHillsHeight(x, z);
+
+		// Move tree slightly above land height.
+		y += 8.0f;
+
+		vertices[i].Pos = XMFLOAT3(x, y, z);
+		vertices[i].Size = XMFLOAT2(15.0f, 15.0f);
+	}
+
 	std::array<std::uint16_t, 16> indices =
 	{
 		0, 1, 2, 3, 4, 5, 6, 7,
-		8, 9, 10, 11, 12, 13, 14, 15
+		8, 9, 10, 11, 12, 13, 14,15
 	};
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(TreeSpriteVertex);
@@ -1265,7 +1266,7 @@ void ShapesApp::BuildMaterials()
 	bricks0->MatCBIndex = 0;
 	bricks0->DiffuseSrvHeapIndex = 0;
 	bricks0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	bricks0->FresnelR0 = XMFLOAT3(0.5f, 0.5f, 0.5f);
+	bricks0->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
 	bricks0->Roughness = 0.9f;
 
 	auto stone0 = std::make_unique<Material>();
@@ -1273,7 +1274,7 @@ void ShapesApp::BuildMaterials()
 	stone0->MatCBIndex = 1;
 	stone0->DiffuseSrvHeapIndex = 1;
 	stone0->DiffuseAlbedo = XMFLOAT4(0.8f, 0.8f, 1.0f, 1.0f);
-	stone0->FresnelR0 = XMFLOAT3(0.5f, 0.5f, 0.5f);
+	stone0->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
 	stone0->Roughness = 0.9f;
 
 	auto sand0 = std::make_unique<Material>();
@@ -1281,15 +1282,15 @@ void ShapesApp::BuildMaterials()
 	sand0->MatCBIndex = 2;
 	sand0->DiffuseSrvHeapIndex = 2;
 	sand0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	sand0->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-	sand0->Roughness = 0.9f;
+	sand0->FresnelR0 = XMFLOAT3(0.6f, 0.6f, 0.6f);
+	sand0->Roughness = 0.95f;
 
 	auto plastic0 = std::make_unique<Material>();
 	plastic0->Name = "plastic0";
 	plastic0->MatCBIndex = 3;
 	plastic0->DiffuseSrvHeapIndex = 3;
 	plastic0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	plastic0->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
+	plastic0->FresnelR0 = XMFLOAT3(0.6f, 0.6f, 0.6f);
 	plastic0->Roughness = 0.3f;
 
 	auto Water0 = std::make_unique<Material>();
@@ -1297,15 +1298,15 @@ void ShapesApp::BuildMaterials()
 	Water0->MatCBIndex = 4;
 	Water0->DiffuseSrvHeapIndex = 4;
 	Water0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.6f);
-	Water0->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
-	Water0->Roughness = 0.2f;
+	Water0->FresnelR0 = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	Water0->Roughness = 0.0f;
 
 	auto Ice0 = std::make_unique<Material>();
 	Ice0->Name = "ice0";
 	Ice0->MatCBIndex = 5;
 	Ice0->DiffuseSrvHeapIndex = 5;
 	Ice0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.8f);
-	Ice0->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+	Ice0->FresnelR0 = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	Ice0->Roughness = 0.1f;
 
 	auto flag0 = std::make_unique<Material>();
@@ -1313,8 +1314,8 @@ void ShapesApp::BuildMaterials()
 	flag0->MatCBIndex = 6;
 	flag0->DiffuseSrvHeapIndex = 6;
 	flag0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	flag0->FresnelR0 = XMFLOAT3(0.95f, 0.95f, 0.95f);
-	flag0->Roughness = 0.9f;
+	flag0->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
+	flag0->Roughness = 0.7f;
 
 	auto wirefence = std::make_unique<Material>();
 	wirefence->Name = "wirefence";
@@ -1460,8 +1461,6 @@ void ShapesApp::BuildRenderItems()
         mAllRitems.push_back(std::move(prismRitem));
 
 
- 
-
         int mogulsNum = 50;
         for (int j =0; j < mogulsNum; j+= 2) //changed for the loop to increment by 2 to make nesting a little clearer to read, also less division
         {
@@ -1484,10 +1483,10 @@ void ShapesApp::BuildRenderItems()
     }
     //moat walls / outer walls
 
-	auto moatgridRitem = std::make_unique<RenderItem>();
-	XMMATRIX moatgridWorld = XMMatrixTranslation(0, -1, 0);
-	SetRenderItemInfo(*moatgridRitem, "moatgrid", moatgridWorld, "sand0", RenderLayer::Opaque);
-	mAllRitems.push_back(std::move(moatgridRitem));
+	auto sandDunesRitem = std::make_unique<RenderItem>();
+	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -1, 0);
+	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
+	mAllRitems.push_back(std::move(sandDunesRitem));
 
     for (int i = 0; i < 4; i++)
     {
