@@ -112,6 +112,7 @@ private:
 
 	float GetHillsHeight(float x, float z)const;
 	XMFLOAT3 GetHillsNormal(float x, float z)const;
+	XMFLOAT3 GetTreePosition(float minX, float maxX, float minZ, float maxZ, float treeHeightOffset)const;
 
 private:
 
@@ -789,7 +790,7 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
-    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
+    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 3, depth * 3, 180 , 120);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -1083,38 +1084,35 @@ void ShapesApp::BuildTreeSpritesGeometry()
 		XMFLOAT2 Size;
 	};
 
-	static const int treeCount = 16;
-	std::array<TreeSpriteVertex, 16> vertices;
-	for(UINT i = 0; i < treeCount/2; ++i)
+	const float m_size = 15.0f;
+	const float m_halfHeight = m_size/2.4f;   //the texture has empty space, 2.4 works better for the actual tree height
+
+	static const int treeCount = 20;
+	std::array<TreeSpriteVertex, treeCount> vertices;
+	for(UINT i = 0; i < treeCount*0.3; ++i)
 	{
-		float x = MathHelper::RandF(-46.0f, -38.0f);
-		float z = MathHelper::RandF(-44.0f, 44.0f);
-		float y = GetHillsHeight(x, z);
 
-		// Move tree slightly above land height.
-		y += 8.0f;
-
-		vertices[i].Pos = XMFLOAT3(x, y, z);
-		vertices[i].Size = XMFLOAT2(20.0f, 20.0f);
+		vertices[i].Pos = GetTreePosition(-70, -32, -70, 70, m_halfHeight);
+		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
 
-	for(UINT i = treeCount/2; i < treeCount; ++i)
+	for(UINT i = treeCount*0.3; i < treeCount*0.7; ++i)
 	{
-		float x = MathHelper::RandF(38.0f, 46.0f);
-		float z = MathHelper::RandF(-44.0f, 44.0f);
-		float y = GetHillsHeight(x, z);
-
-		// Move tree slightly above land height.
-		y += 8.0f;
-
-		vertices[i].Pos = XMFLOAT3(x, y, z);
-		vertices[i].Size = XMFLOAT2(15.0f, 15.0f);
+		vertices[i].Pos = vertices[i].Pos = GetTreePosition(32, 70, -70, 70, m_halfHeight);
+		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
+	for(UINT i = treeCount*0.7; i < treeCount; ++i)
+	{
+		vertices[i].Pos = vertices[i].Pos = GetTreePosition(-31, 31, 35, 70, m_halfHeight);
+		vertices[i].Size = XMFLOAT2(m_size, m_size);
+	}
+	
 
-	std::array<std::uint16_t, 16> indices =
+	std::array<std::uint16_t, treeCount> indices =
 	{
 		0, 1, 2, 3, 4, 5, 6, 7,
-		8, 9, 10, 11, 12, 13, 14,15
+		8, 9, 10, 11, 12, 13, 14, 15,
+		16, 17, 18, 19  
 	};
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(TreeSpriteVertex);
@@ -1297,7 +1295,7 @@ void ShapesApp::BuildMaterials()
 	Water0->Name = "water0";
 	Water0->MatCBIndex = 4;
 	Water0->DiffuseSrvHeapIndex = 4;
-	Water0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.6f);
+	Water0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
 	Water0->FresnelR0 = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	Water0->Roughness = 0.0f;
 
@@ -1373,7 +1371,7 @@ void ShapesApp::BuildRenderItems()
     float radius = sqrt(w2 * w2 + d2 * d2);
 
     auto gridRitem = std::make_unique<RenderItem>();
-    XMMATRIX gridWorld = XMMatrixIdentity();
+    XMMATRIX gridWorld = XMMatrixTranslation(0.0f, 0.1f, 0.0f);
 
 	
     SetRenderItemInfo(*gridRitem, "grid",gridWorld, "sand0", RenderLayer::Opaque);
@@ -1393,7 +1391,7 @@ void ShapesApp::BuildRenderItems()
         auto flagRitem = std::make_unique<RenderItem>();
        
 
-        XMMATRIX towerWorld = XMMatrixScaling(6.0f, 7.0f, 6.0f) * XMMatrixTranslation(cRadius, 7.0f, sRadius); //keep in mind the base cylinder has a height of 2
+        XMMATRIX towerWorld = XMMatrixScaling(6.0f, 10.0f, 6.0f) * XMMatrixTranslation(cRadius, 5.0f, sRadius); //keep in mind the base cylinder has a height of 2
         XMMATRIX poleWorld = XMMatrixScaling(0.2f, 2.0f, 0.2f) * XMMatrixTranslation(cRadius, 21.0f, sRadius);
         XMMATRIX sphereWorld = XMMatrixScaling(0.3f, 0.3f, 0.3f) * XMMatrixTranslation(cRadius, 23.1f, sRadius);
         XMMATRIX flagWorld = XMMatrixScaling(1.5f, 1.0f, 0.1f) * XMMatrixTranslation(cRadius - 1, 22.5f, sRadius);
@@ -1448,7 +1446,7 @@ void ShapesApp::BuildRenderItems()
         if (i < 3)
         {
             auto boxRitem = std::make_unique<RenderItem>();
-            XMMATRIX world = XMMatrixScaling(1.0f, 10.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 5.0f, sRadius);
+            XMMATRIX world = XMMatrixScaling(1.0f, 15.0f, width) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 3.0f, sRadius);
            
             SetRenderItemInfo(*boxRitem, "box", world, "bricks0", RenderLayer::Opaque);
             mAllRitems.push_back(std::move(boxRitem));
@@ -1484,9 +1482,10 @@ void ShapesApp::BuildRenderItems()
     //moat walls / outer walls
 
 	auto sandDunesRitem = std::make_unique<RenderItem>();
-	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -1, 0);
+	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -2, 0) ;
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
 	mAllRitems.push_back(std::move(sandDunesRitem));
+
 
     for (int i = 0; i < 4; i++)
     {
@@ -1495,15 +1494,15 @@ void ShapesApp::BuildRenderItems()
         float cRadius = w2 * cosf(theta);
 
         
-            auto boxRitem = std::make_unique<RenderItem>();
-            XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 4.0f, sRadius *2);
+        auto boxRitem = std::make_unique<RenderItem>();
+        XMMATRIX Moatworld = XMMatrixScaling(2.0f, 15.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 2.0f, sRadius *2);
 
-            SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
-            mAllRitems.push_back(std::move(boxRitem));
+        SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
+        mAllRitems.push_back(std::move(boxRitem));
         
 
         auto waterRitem = std::make_unique<RenderItem>();
-        XMMATRIX WaterWorld = XMMatrixScaling(0.5f, 1.0, 2.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 1.5, -0.1f * i, sRadius * 1.5);
+        XMMATRIX WaterWorld = XMMatrixScaling(1.5f, 1.0, 3.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 2.5, -0.05f * i, sRadius * 2.5);
 		SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
 		mAllRitems.push_back(std::move(waterRitem));
 
@@ -1513,7 +1512,7 @@ void ShapesApp::BuildRenderItems()
     for (int i = 0; i < 2; i++)
     {
         auto boxRitem = std::make_unique<RenderItem>();
-        XMMATRIX WallWorld = XMMatrixScaling(19.0f, 10.0f, 1.0f) * XMMatrixTranslation(-12.5f + i * 25.0f, 5.0f, -25.0f);
+        XMMATRIX WallWorld = XMMatrixScaling(19.0f, 15.0f, 1.0f) * XMMatrixTranslation(-12.5f + i * 25.0f, 3.0f, -25.0f);
         SetRenderItemInfo(*boxRitem, "box", WallWorld, "bricks0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(boxRitem));
     }
@@ -1522,6 +1521,11 @@ void ShapesApp::BuildRenderItems()
     XMMATRIX PyrWorld = XMMatrixScaling(21.0f, 6.0f, 21.0f) * XMMatrixTranslation(0.0f, 7.5f, 13.0f);
     SetRenderItemInfo(*pyramidRitem, "pyramid", PyrWorld, "sand0", RenderLayer::Opaque);
     mAllRitems.push_back(std::move(pyramidRitem));
+
+	auto baseRitem = std::make_unique<RenderItem>();
+    XMMATRIX baseWorld = XMMatrixScaling(20.75f, 4.5f, 20.75f) * XMMatrixTranslation(0.0f, 2.25f, 13.0f);
+    SetRenderItemInfo(*baseRitem, "box", baseWorld, "sand0", RenderLayer::Opaque);
+    mAllRitems.push_back(std::move(baseRitem));
 
     auto diamondRitem = std::make_unique<RenderItem>();
     XMMATRIX DiamondWorld = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 13.0f, 13.0f);
@@ -1679,4 +1683,21 @@ XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
 	XMStoreFloat3(&n, unitNormal);
 
 	return n;
+}
+
+XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float maxZ, float treeHeightOffset)const
+{
+	XMFLOAT3 pos(0.0f, -1.0f, 0.0f);
+
+	while(pos.y < 1.5f)
+	{
+		pos.x = MathHelper::RandF(minX, maxX);
+		pos.z = MathHelper::RandF(minZ, maxZ);
+		pos.y = GetHillsHeight(pos.x, pos.z);
+	}
+	
+	// Move tree slightly above land height.
+	pos.y += treeHeightOffset - 1;
+
+	return pos;
 }
