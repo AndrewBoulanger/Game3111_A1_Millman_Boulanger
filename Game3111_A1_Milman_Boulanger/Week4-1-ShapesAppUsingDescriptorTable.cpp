@@ -1605,7 +1605,6 @@ void ShapesApp::BuildRenderItems()
 	coralSpritesRitem->ObjCBIndex = objCBIndex++;
 	coralSpritesRitem->Mat = mMaterials["coralSprite"].get();
 	coralSpritesRitem->Geo = mGeometries["treeSpritesGeo"].get();
-	//step2
 	coralSpritesRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
 	coralSpritesRitem->IndexCount = coralSpritesRitem->Geo->DrawArgs["points"].IndexCount;
 	coralSpritesRitem->StartIndexLocation = coralSpritesRitem->Geo->DrawArgs["points"].StartIndexLocation;
