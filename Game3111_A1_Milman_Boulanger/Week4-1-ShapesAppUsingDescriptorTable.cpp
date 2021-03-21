@@ -533,7 +533,7 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 
 	//cyan
 	mMainPassCB.Lights[7].Position = { 15.0f, 5.0f, 49.0f };
-	mMainPassCB.Lights[7].Strength = { 0.0, 0.0f, 1.0f };
+	mMainPassCB.Lights[7].Strength = { 0.0, 1.0f, 1.0f };
 
 	//purple
 	mMainPassCB.Lights[8].Position = { -15.0f, 5.0f, 49.0f };
