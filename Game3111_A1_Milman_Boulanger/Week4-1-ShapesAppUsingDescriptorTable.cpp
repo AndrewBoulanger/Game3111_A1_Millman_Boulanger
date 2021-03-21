@@ -814,12 +814,8 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
-<<<<<<< Updated upstream
-    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 3, depth * 3, 180 , 120);
-=======
 	GeometryGenerator::MeshData waterGrid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
     GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 4, depth * 4, 60 * 4, 40);
->>>>>>> Stashed changes
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -1520,11 +1516,7 @@ void ShapesApp::BuildRenderItems()
     //moat walls / outer walls
 
 	auto sandDunesRitem = std::make_unique<RenderItem>();
-<<<<<<< Updated upstream
-	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -2, 0) ;
-=======
 	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -5, 0);
->>>>>>> Stashed changes
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
