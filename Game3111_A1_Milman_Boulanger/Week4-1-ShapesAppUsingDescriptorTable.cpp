@@ -1119,25 +1119,26 @@ void ShapesApp::BuildTreeSpritesGeometry()
 	};
 
 	const float m_size = 15.0f;
-	const float m_halfHeight = m_size/2.4f;   //the texture has empty space, 2.4 works better for the actual tree height
+	const float m_halfHeight = m_size/3.0f;   //the texture has empty space, 2.4 works better for the actual tree height
 
 	static const int treeCount = 20;
 	std::array<TreeSpriteVertex, treeCount> vertices;
+	//left side trees
 	for(UINT i = 0; i < treeCount*0.3; ++i)
 	{
-
-		vertices[i].Pos = GetTreePosition(-70, -32, -70, 70, m_halfHeight);
+		vertices[i].Pos = GetTreePosition(-80, -55, -70, 80, m_halfHeight);
 		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
-
+	//right side trees
 	for(UINT i = treeCount*0.3; i < treeCount*0.7; ++i)
 	{
-		vertices[i].Pos = vertices[i].Pos = GetTreePosition(32, 70, -70, 70, m_halfHeight);
+		vertices[i].Pos = vertices[i].Pos = GetTreePosition(55, 80, -70, 80, m_halfHeight);
 		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
+	//top side trees
 	for(UINT i = treeCount*0.7; i < treeCount; ++i)
 	{
-		vertices[i].Pos = vertices[i].Pos = GetTreePosition(-31, 31, 35, 70, m_halfHeight);
+		vertices[i].Pos = vertices[i].Pos = GetTreePosition(-50, 50, 55, 80, m_halfHeight);
 		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
 	
@@ -1731,15 +1732,14 @@ XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float ma
 {
 	XMFLOAT3 pos(0.0f, -1.0f, 0.0f);
 
-	while(pos.y < 1.5f)
-	{
+
 		pos.x = MathHelper::RandF(minX, maxX);
 		pos.z = MathHelper::RandF(minZ, maxZ);
 		pos.y = GetHillsHeight(pos.x, pos.z);
-	}
+	
 	
 	// Move tree slightly above land height.
-	pos.y += treeHeightOffset - 1;
+	pos.y += treeHeightOffset - 4;
 
 	return pos;
 }
