@@ -603,7 +603,7 @@ void ShapesApp::LoadTextures()
 
 	auto CoralTex = std::make_unique<Texture>();
 	CoralTex->Name = "CoralTex";
-	CoralTex->Filename = L"Textures/Coral.dds";
+	CoralTex->Filename = L"Textures/CoralArray.dds";
 	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
 		mCommandList.Get(), CoralTex->Filename.c_str(),
 		CoralTex->Resource, CoralTex->UploadHeap));
@@ -726,7 +726,7 @@ void ShapesApp::BuildDescriptorHeaps()
 	hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
 	auto coraldesc = CoralTex->GetDesc();
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
 	srvDesc.Format = CoralTex->GetDesc().Format;
 	srvDesc.Texture2DArray.MostDetailedMip = 0;
 	srvDesc.Texture2DArray.MipLevels = -1;
