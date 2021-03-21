@@ -305,6 +305,9 @@ void ShapesApp::Draw(const GameTimer& gt)
 	mCommandList->SetPipelineState(mPSOs["treeSprites"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::AlphaTestedTreeSprites]);
 
+	/*mCommandList->SetPipelineState(mPSOs["CoralSprite"].Get());
+	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::AlphaTestedTreeSprites]);*/
+
 	mCommandList->SetPipelineState(mPSOs["transparent"].Get());
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Transparent]);
 
@@ -589,6 +592,13 @@ void ShapesApp::LoadTextures()
 		mCommandList.Get(), treeArrayTex->Filename.c_str(),
 		treeArrayTex->Resource, treeArrayTex->UploadHeap));
 
+	/*auto CoralTex = std::make_unique<Texture>();
+	CoralTex->Name = "CoralTex";
+	CoralTex->Filename = L"Textures/Coral.dds";
+	ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+		mCommandList.Get(), CoralTex->Filename.c_str(),
+		CoralTex->Resource, CoralTex->UploadHeap));*/
+
 
 	mTextures[bricksTex->Name] = std::move(bricksTex);
 	mTextures[stoneTex->Name] = std::move(stoneTex);
@@ -599,6 +609,8 @@ void ShapesApp::LoadTextures()
 	mTextures[flagTex->Name] = std::move(flagTex);
 	mTextures[fenceTex->Name] = std::move(fenceTex);
 	mTextures[treeArrayTex->Name] = std::move(treeArrayTex);
+	/*mTextures[CoralTex->Name] = std::move(CoralTex);*/
+
 }
 
 //If we have 3 frame resources and n render items, then we have three 3n object constant
@@ -630,6 +642,7 @@ void ShapesApp::BuildDescriptorHeaps()
 	auto flagTex = mTextures["flagTex"]->Resource;
 	auto fenceTex = mTextures["fenceTex"]->Resource;
 	auto treeArrayTex = mTextures["treeArrayTex"]->Resource;
+	/*auto CoralTex = mTextures["CoralTex"]->Resource;*/
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -700,6 +713,17 @@ void ShapesApp::BuildDescriptorHeaps()
 	srvDesc.Texture2DArray.FirstArraySlice = 0;
 	srvDesc.Texture2DArray.ArraySize = treeArrayTex->GetDesc().DepthOrArraySize;
 	md3dDevice->CreateShaderResourceView(treeArrayTex.Get(), &srvDesc, hDescriptor);
+
+	/*hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+	auto coraldesc = CoralTex->GetDesc();
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Format = CoralTex->GetDesc().Format;
+	srvDesc.Texture2DArray.MostDetailedMip = 0;
+	srvDesc.Texture2DArray.MipLevels = -1;
+	srvDesc.Texture2DArray.FirstArraySlice = 0;
+	srvDesc.Texture2DArray.ArraySize = CoralTex->GetDesc().DepthOrArraySize;
+	md3dDevice->CreateShaderResourceView(CoralTex.Get(), &srvDesc, hDescriptor);*/
 }
 
 
@@ -790,7 +814,12 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
+<<<<<<< Updated upstream
     GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 3, depth * 3, 180 , 120);
+=======
+	GeometryGenerator::MeshData waterGrid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
+    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 4, depth * 4, 60 * 4, 40);
+>>>>>>> Stashed changes
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -1331,6 +1360,13 @@ void ShapesApp::BuildMaterials()
 	treeSprites->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
 	treeSprites->Roughness = 0.125f;
 
+	/*auto coralSprite = std::make_unique<Material>();
+	coralSprite->Name = "coralSprite";
+	coralSprite->MatCBIndex = 9;
+	coralSprite->DiffuseSrvHeapIndex = 9;
+	coralSprite->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	coralSprite->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
+	coralSprite->Roughness = 0.125f;*/
 
 	mMaterials["bricks0"] = std::move(bricks0);
 	mMaterials["stone0"] = std::move(stone0);
@@ -1340,7 +1376,9 @@ void ShapesApp::BuildMaterials()
 	mMaterials["sand0"] = std::move(sand0);
 	mMaterials["flag0"] = std::move(flag0);
 	mMaterials["wirefence"] = std::move(wirefence);
-	mMaterials["treeSprites"] = std::move(treeSprites);
+	mMaterials["treeSprites"] = std::move(treeSprites);	
+	/*mMaterials["coralSprite"] = std::move(coralSprite);*/
+
 }
 
 //makes building render items simpler, reduces repeated chunks of code
@@ -1482,7 +1520,11 @@ void ShapesApp::BuildRenderItems()
     //moat walls / outer walls
 
 	auto sandDunesRitem = std::make_unique<RenderItem>();
+<<<<<<< Updated upstream
 	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -2, 0) ;
+=======
+	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -5, 0);
+>>>>>>> Stashed changes
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
@@ -1567,8 +1609,19 @@ void ShapesApp::BuildRenderItems()
 	treeSpritesRitem->StartIndexLocation = treeSpritesRitem->Geo->DrawArgs["points"].StartIndexLocation;
 	treeSpritesRitem->BaseVertexLocation = treeSpritesRitem->Geo->DrawArgs["points"].BaseVertexLocation;
 
-	mRitemLayer[(int)RenderLayer::AlphaTestedTreeSprites].push_back(treeSpritesRitem.get());
-	mAllRitems.push_back(std::move(treeSpritesRitem));
+
+	//auto coralSpritesRitem = std::make_unique<RenderItem>();
+	//coralSpritesRitem->World = MathHelper::Identity4x4();
+	//coralSpritesRitem->ObjCBIndex = objCBIndex++;
+	//coralSpritesRitem->Mat = mMaterials["coralSprite"].get();
+	//coralSpritesRitem->Geo = mGeometries["treeSpritesGeo"].get();
+	////step2
+	//coralSpritesRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+	//coralSpritesRitem->IndexCount = coralSpritesRitem->Geo->DrawArgs["points"].IndexCount;
+	//coralSpritesRitem->StartIndexLocation = coralSpritesRitem->Geo->DrawArgs["points"].StartIndexLocation;
+	//coralSpritesRitem->BaseVertexLocation = coralSpritesRitem->Geo->DrawArgs["points"].BaseVertexLocation;
+	//mRitemLayer[(int)RenderLayer::AlphaTestedTreeSprites].push_back(coralSpritesRitem.get());
+	//mAllRitems.push_back(std::move(coralSpritesRitem));
 
 
 
