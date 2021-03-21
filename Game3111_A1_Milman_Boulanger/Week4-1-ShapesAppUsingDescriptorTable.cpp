@@ -1537,14 +1537,14 @@ void ShapesApp::BuildRenderItems()
 
         
         auto boxRitem = std::make_unique<RenderItem>();
-        XMMATRIX Moatworld = XMMatrixScaling(2.0f, 15.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 2.0f, sRadius *2);
+        XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 2.0f, sRadius *2);
 
         SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(boxRitem));
         
 
         auto waterRitem = std::make_unique<RenderItem>();
-        XMMATRIX WaterWorld = XMMatrixScaling(1.5f, 1.0, 3.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 2.5, -0.05f * i, sRadius * 2.5);
+        XMMATRIX WaterWorld = XMMatrixScaling(0.5f, 1.0, 2.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 1.5, -0.05f * i, sRadius * 1.5);
 		SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
 		mAllRitems.push_back(std::move(waterRitem));
 
