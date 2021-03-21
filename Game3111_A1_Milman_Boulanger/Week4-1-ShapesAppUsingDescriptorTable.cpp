@@ -522,7 +522,7 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 	mMainPassCB.Lights[3].Strength = { 1.0f, 1.0f, 0.0f };
 	//green
     mMainPassCB.Lights[4].Position = { 5.0f, 5.0f, 49.0f };
-	mMainPassCB.Lights[4].Strength = { 0.0f, 1.0f, 0.0f };//pointlights
+	mMainPassCB.Lights[4].Strength = { 0.0f, 1.0f, 0.0f };
 	//red
 	mMainPassCB.Lights[5].Position = { -10.0f, 5.0f, 49.0f };
 	mMainPassCB.Lights[5].Strength = { 1.0f, 0.0f, 0.0f };
