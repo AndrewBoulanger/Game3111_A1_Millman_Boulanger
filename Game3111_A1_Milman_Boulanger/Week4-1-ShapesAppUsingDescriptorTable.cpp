@@ -1608,7 +1608,8 @@ void ShapesApp::BuildRenderItems()
 	treeSpritesRitem->IndexCount = treeSpritesRitem->Geo->DrawArgs["points"].IndexCount;
 	treeSpritesRitem->StartIndexLocation = treeSpritesRitem->Geo->DrawArgs["points"].StartIndexLocation;
 	treeSpritesRitem->BaseVertexLocation = treeSpritesRitem->Geo->DrawArgs["points"].BaseVertexLocation;
-
+	 mRitemLayer[(int)RenderLayer::AlphaTestedTreeSprites].push_back(treeSpritesRitem.get());
+	mAllRitems.push_back(std::move(treeSpritesRitem));
 
 	//auto coralSpritesRitem = std::make_unique<RenderItem>();
 	//coralSpritesRitem->World = MathHelper::Identity4x4();
