@@ -1512,7 +1512,7 @@ void ShapesApp::BuildRenderItems()
         auto prismRitem = std::make_unique<RenderItem>();
 
         XMMATRIX PrismWorld = XMMatrixScaling(1.0f, 4.0f, width - 3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius);
-		XMMATRIX Prismtexworld = XMMatrixScaling(1.0f, 1.0f, width );
+		XMMATRIX Prismtexworld = XMMatrixScaling(5.0f, 1.0f, width );
 
 	
 		
@@ -1549,13 +1549,15 @@ void ShapesApp::BuildRenderItems()
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
-
+	/*bool bWaterRotate;*/
     for (int i = 0; i < 4; i++)
     {
+
         float theta = i * thetaSquareStep;
         float sRadius = w2 * sinf(theta);
         float cRadius = w2 * cosf(theta);
 		XMMATRIX texworld = XMMatrixScaling(4.0f, 1.0f, width * 2);
+		
         
         auto boxRitem = std::make_unique<RenderItem>();
         XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 2.0f, sRadius *2);
@@ -1563,14 +1565,27 @@ void ShapesApp::BuildRenderItems()
         SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(boxRitem));
         
-
-        auto waterRitem = std::make_unique<RenderItem>();
-        XMMATRIX WaterWorld = XMMatrixScaling(0.5f, 1.0, 2.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 1.5, -0.05f * i, sRadius * 1.5);
-		SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
-		mAllRitems.push_back(std::move(waterRitem));
-
+		//this code modulates and moves the textures in the same direction for the 4 water quads, but changes the shape of the water as well
+		/* bWaterRotate = (i == 1 || i == 3);
+		 if (bWaterRotate){
+			*/
+			
+			/*auto waterRitem = std::make_unique<RenderItem>();
+			XMMATRIX WaterWorld = XMMatrixScaling(0.5f, 1.0, 2.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 1.5, -0.05f * i, sRadius * 1.5);
+			SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
+			mAllRitems.push_back(std::move(waterRitem));*/
+		/*}
+		 else {
+			 auto waterRitem = std::make_unique<RenderItem>();
+			 XMMATRIX WaterWorld = XMMatrixScaling(2.0f, 1.0, 2.0f) * XMMatrixRotationY(XM_PIDIV2) * XMMatrixTranslation(cRadius * 1.5, -0.05f * i, sRadius * 1.5);
+			 SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
+			 mAllRitems.push_back(std::move(waterRitem));
+		 }*/
     }
-
+	auto waterRitem = std::make_unique<RenderItem>();
+	XMMATRIX WaterWorld = XMMatrixScaling(2.0f, 10.0, 2.0f);
+	SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
+	mAllRitems.push_back(std::move(waterRitem));
     //smaller, front walls
     for (int i = 0; i < 2; i++)
     {
