@@ -412,8 +412,8 @@ void ShapesApp::AnimateMaterials(const GameTimer& gt)
 	float& tu = waterMat->MatTransform(3, 0);
 	float& tv = waterMat->MatTransform(3, 1);
 
-	//tu -= 0.1f * gt.DeltaTime();
-	tv -= 0.1f * gt.DeltaTime();
+	/*tu -= 0.1f * gt.DeltaTime();*/
+	tv -= 0.2f * gt.DeltaTime();
 
 	/*if (tu <= 0.0f)
 		tu += 1.0f;*/
@@ -1402,7 +1402,7 @@ void ShapesApp::BuildMaterials()
 
 //makes building render items simpler, reduces repeated chunks of code
 //the itemType is the key used to access the submesh
-void ShapesApp::SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform, std::string material, RenderLayer layer)
+void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMATRIX transform, std::string material, RenderLayer layer)
 {
     Ritem.ObjCBIndex = objCBIndex++;
     XMStoreFloat4x4(&Ritem.World, transform);
@@ -1510,7 +1510,13 @@ void ShapesApp::BuildRenderItems()
         }
         //the prism along the top of the walls
         auto prismRitem = std::make_unique<RenderItem>();
+
         XMMATRIX PrismWorld = XMMatrixScaling(1.0f, 4.0f, width - 3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius);
+		XMMATRIX Prismtexworld = XMMatrixScaling(1.0f, 1.0f, width );
+
+	
+		
+		XMStoreFloat4x4(&prismRitem.get()->TexTransform, Prismtexworld);
        
         SetRenderItemInfo(*prismRitem, "prism", PrismWorld, "stone0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(prismRitem));
@@ -1549,11 +1555,11 @@ void ShapesApp::BuildRenderItems()
         float theta = i * thetaSquareStep;
         float sRadius = w2 * sinf(theta);
         float cRadius = w2 * cosf(theta);
-
+		XMMATRIX texworld = XMMatrixScaling(4.0f, 1.0f, width * 2);
         
         auto boxRitem = std::make_unique<RenderItem>();
         XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 2.0f, sRadius *2);
-
+		XMStoreFloat4x4(&boxRitem.get()->TexTransform, texworld);
         SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(boxRitem));
         
