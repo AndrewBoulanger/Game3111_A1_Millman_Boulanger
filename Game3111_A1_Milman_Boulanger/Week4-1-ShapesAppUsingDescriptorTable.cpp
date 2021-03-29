@@ -161,6 +161,8 @@ private:
     POINT mLastMousePos;
 
     UINT objCBIndex = 0;
+
+	float waterMoveRate = 0.05f;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -406,20 +408,23 @@ void ShapesApp::UpdateCamera(const GameTimer& gt)
 
 void ShapesApp::AnimateMaterials(const GameTimer& gt)
 {
+	waterMoveRate += gt.DeltaTime();
+	if(waterMoveRate >=360)
+		waterMoveRate = 0;
 	// Scroll the water material texture coordinates.
 	auto waterMat = mMaterials["water0"].get();
 
 	float& tu = waterMat->MatTransform(3, 0);
 	float& tv = waterMat->MatTransform(3, 1);
 
-	/*tu -= 0.1f * gt.DeltaTime();*/
-	tv -= 0.2f * gt.DeltaTime();
+	tu =  sin(waterMoveRate)*0.12;
+//	tv += 0.04f * gt.DeltaTime();
 
-	/*if (tu <= 0.0f)
-		tu += 1.0f;*/
+	//if (tu >= 1.0f )
+	//	waterMoveRate -= 1.0f ;
 
-	if (tv <= 0.0f)
-		tv += 1.0f;
+	if (tv >= 1.0f)
+		tv -= 1.0f;
 
 	waterMat->MatTransform(3, 0) = tu;
 	waterMat->MatTransform(3, 1) = tv;
@@ -574,7 +579,7 @@ void ShapesApp::LoadTextures()
 
     auto waterTex = std::make_unique<Texture>();
     waterTex->Name = "waterTex";
-    waterTex->Filename = L"Textures/water1.dds";
+    waterTex->Filename = L"Textures/waterTex 2.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), waterTex->Filename.c_str(),
         waterTex->Resource, waterTex->UploadHeap));
@@ -1343,7 +1348,7 @@ void ShapesApp::BuildMaterials()
 	Water0->Name = "water0";
 	Water0->MatCBIndex = 4;
 	Water0->DiffuseSrvHeapIndex = 4;
-	Water0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
+	Water0->DiffuseAlbedo = XMFLOAT4(0.8f, 0.8f, 0.8f, 0.7f);
 	Water0->FresnelR0 = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	Water0->Roughness = 0.0f;
 
@@ -1513,9 +1518,6 @@ void ShapesApp::BuildRenderItems()
 
         XMMATRIX PrismWorld = XMMatrixScaling(1.0f, 4.0f, width - 3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius);
 		XMMATRIX Prismtexworld = XMMatrixScaling(1.0f, 1.0f, width );
-
-	
-		
 		XMStoreFloat4x4(&prismRitem.get()->TexTransform, Prismtexworld);
        
         SetRenderItemInfo(*prismRitem, "prism", PrismWorld, "stone0", RenderLayer::Opaque);
@@ -1547,10 +1549,19 @@ void ShapesApp::BuildRenderItems()
 	auto sandDunesRitem = std::make_unique<RenderItem>();
 	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -5, 0);
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
+	XMMATRIX sandTexworld = XMMatrixScaling(3, 3, 2 );
+		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
 
-    for (int i = 0; i < 4; i++)
+	auto waterRitem = std::make_unique<RenderItem>();
+        XMMATRIX WaterWorld = XMMatrixScaling(2.0f, 1.0, 2.0f)  * XMMatrixTranslation(0.0f, -0.05f,0.0f);
+		SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
+		XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2 );
+		XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+		mAllRitems.push_back(std::move(waterRitem));
+
+    for (int i = 0; i < 3; i++)
     {
         float theta = i * thetaSquareStep;
         float sRadius = w2 * sinf(theta);
@@ -1563,11 +1574,6 @@ void ShapesApp::BuildRenderItems()
         SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(boxRitem));
         
-
-        auto waterRitem = std::make_unique<RenderItem>();
-        XMMATRIX WaterWorld = XMMatrixScaling(0.5f, 1.0, 2.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 1.5, -0.05f * i, sRadius * 1.5);
-		SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
-		mAllRitems.push_back(std::move(waterRitem));
 
     }
 
