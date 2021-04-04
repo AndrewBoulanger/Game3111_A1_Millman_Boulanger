@@ -893,7 +893,7 @@ void ShapesApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
 	GeometryGenerator::MeshData waterGrid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
-    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 4, depth * 4, 60 * 4, 40);
+    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 8, depth * 8, 60 * 8, 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -1661,39 +1661,39 @@ void ShapesApp::BuildRenderItems()
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
 
-	auto waterRitem = std::make_unique<RenderItem>();
-        XMMATRIX WaterWorld = XMMatrixScaling(1.8f, 1.0, 1.8f)  * XMMatrixTranslation(0.0f, -1.0f,0.0f);
-		XMStoreFloat4x4(&waterRitem->World, WaterWorld);
-		waterRitem->ObjCBIndex = objCBIndex++;
-		waterRitem->Mat = mMaterials["water0"].get();
-		waterRitem->Geo = mGeometries["waterGeo"].get();
-		waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
-		waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-		waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
-		mWavesRitem = waterRitem.get();
-
-		mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
-		XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2 );
-		XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
-		mAllRitems.push_back(std::move(waterRitem));
-
-    for (int i = 0; i < 3; i++)
-    {
-        float theta = i * thetaSquareStep;
-        float sRadius = w2 * sinf(theta);
-        float cRadius = w2 * cosf(theta);
+	for (int i = 0; i < 3; i++)
+	{
+		float theta = i * thetaSquareStep;
+		float sRadius = w2 * sinf(theta);
+		float cRadius = w2 * cosf(theta);
 		XMMATRIX texworld = XMMatrixScaling(4.0f, 1.0f, width * 2);
-        
-        auto boxRitem = std::make_unique<RenderItem>();
-        XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 2.0f, sRadius *2);
+
+		auto boxRitem = std::make_unique<RenderItem>();
+		XMMATRIX Moatworld = XMMatrixScaling(2.0f, 1.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius * 2, 2.0f, sRadius * 2);
 		XMStoreFloat4x4(&boxRitem.get()->TexTransform, texworld);
-        SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
-        mAllRitems.push_back(std::move(boxRitem));
-        
+		SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
+		mAllRitems.push_back(std::move(boxRitem));
 
-    }
+		if (i == 0 || i == 2) {
+			auto waterRitem = std::make_unique<RenderItem>();
+			XMMATRIX WaterWorld = XMMatrixScaling(0.2,81.0, 1.8f) * XMMatrixRotationY(XM_PI) * (XMMatrixTranslation(-20 + (20* i), -1.0f, 0.0f));
+			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
+			waterRitem->ObjCBIndex = objCBIndex++;
+			waterRitem->Mat = mMaterials["water0"].get();
+			waterRitem->Geo = mGeometries["waterGeo"].get();
+			waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
+			waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+			waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+			mWavesRitem = waterRitem.get();
 
+			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
+			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
+			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+			mAllRitems.push_back(std::move(waterRitem));
+
+		}
+	}
     //smaller, front walls
     for (int i = 0; i < 2; i++)
     {
