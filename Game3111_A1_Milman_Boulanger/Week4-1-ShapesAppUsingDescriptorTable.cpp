@@ -40,13 +40,34 @@ struct Box
 	float lengthZ = 0;
 	float posX = 0;
 	float posZ = 0;
-	Box(float w, float l, float x, float z)
+
+	float mazeZOffset = -130.0f;
+	float mazeXOffset = 3.5f;
+	Box(float w, float l, float x, float z, bool horizontal = false)
 	{
-		widthX = w;
-		lengthZ = l;
-		posX = x;
+		widthX = w ;
+		lengthZ = l ;
+		posX = x ;
 		posZ = z;
+
 	}
+
+	/*	float mScale = 7.0f;
+	float normalizer = 18.0f;
+	float mazeZOffset = -110.0f;
+	float mazeXOffset = 3.5f;
+	for(int i = 0; i< 98; i++)
+	{
+		buildWaterwall(boxMaze[i].widthX/normalizer, boxMaze[i].lengthZ,  
+			-10.0f * mScale + (mScale*(boxMaze[i].posX + boxMaze[i].widthX/2.0f) + mazeXOffset),
+			-10.0f * mScale + (mScale*boxMaze[i].posZ ) + mazeZOffset);
+	}
+	for(int i = 98; i< boxMaze.size(); i++)
+	{
+		buildWaterwall(boxMaze[i].widthX, boxMaze[i].lengthZ/normalizer,  
+			-10.0f * mScale + (mScale* boxMaze[i].posX + mazeXOffset),
+			-10.0f * mScale + (mScale* (boxMaze[i].posZ - boxMaze[i].lengthZ/2.0f) ) + mazeZOffset);
+	}*/
 };
 
 // Lightweight structure stores parameters to draw a shape.  This will
@@ -134,6 +155,8 @@ private:
 	XMFLOAT3 GetHillsNormal(float x, float z)const;
 	XMFLOAT3 GetTreePosition(float minX, float maxX, float minZ, float maxZ, float treeHeightOffset)const;
 
+	void loadMazeWalls();
+
 private:
 
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
@@ -187,228 +210,7 @@ private:
 
 	float waterMoveRate = 0.05f;
 
-	std::array<Box, 197> boxMaze = {
-Box(10.0f, 0.01f, 0.0f, 0.0f),
-Box(9.0f, 0.01f, 11.0f, 0.0f),
-Box(1.0f, 0.01f, 1.0f, 1.0f),
-Box(1.0f, 0.01f, 3.0f, 1.0f),
-Box(1.0f, 0.01f, 6.0f, 1.0f),
-Box(4.0f, 0.01f, 9.0f, 1.0f),
-Box(3.0f, 0.01f, 15.0f, 1.0f),
-Box(2.0f, 0.01f, 1.0f, 2.0f),
-Box(4.0f, 0.01f, 4.0f, 2.0f),
-Box(2.0f, 0.01f, 9.0f, 2.0f),
-Box(2.0f, 0.01f, 18.0f, 2.0f),
-Box(1.0f, 0.01f, 0.0f, 3.0f),
-Box(1.0f, 0.01f, 2.0f, 3.0f),
-Box(1.0f, 0.01f, 5.0f, 3.0f),
-Box(2.0f, 0.01f, 8.0f, 3.0f),
-Box(2.0f, 0.01f, 12.0f, 3.0f),
-Box(4.0f, 0.01f, 15.0f, 3.0f),
-Box(1.0f, 0.01f, 1.0f, 4.0f),
-Box(3.0f, 0.01f, 4.0f, 4.0f),
-Box(4.0f, 0.01f, 9.0f, 4.0f),
-Box(4.0f, 0.01f, 14.0f, 4.0f),
-Box(1.0f, 0.01f, 19.0f, 4.0f),
-Box(2.0f, 0.01f, 6.0f, 5.0f),
-Box(1.0f, 0.01f, 10.0f, 5.0f),
-Box(1.0f, 0.01f, 13.0f, 5.0f),
-Box(1.0f, 0.01f, 18.0f, 5.0f),
-Box(1.0f, 0.01f, 0.0f, 6.0f),
-Box(4.0f, 0.01f, 2.0f, 6.0f),
-Box(1.0f, 0.01f, 12.0f, 6.0f),
-Box(1.0f, 0.01f, 15.0f, 6.0f),
-Box(3.0f, 0.01f, 17.0f, 6.0f),
-Box(1.0f, 0.01f, 1.0f, 7.0f),
-Box(3.0f, 0.01f, 7.0f, 7.0f),
-Box(1.0f, 0.01f, 11.0f, 7.0f),
-Box(3.0f, 0.01f, 13.0f, 7.0f),
-Box(1.0f, 0.01f, 18.0f, 7.0f),
-Box(1.0f, 0.01f, 0.0f, 8.0f),
-Box(1.0f, 0.01f, 3.0f, 8.0f),
-Box(2.0f, 0.01f, 5.0f, 8.0f),
-Box(1.0f, 0.01f, 10.0f, 8.0f),
-Box(3.0f, 0.01f, 14.0f, 8.0f),
-Box(4.0f, 0.01f, 1.0f, 9.0f),
-Box(2.0f, 0.01f, 6.0f, 9.0f),
-Box(1.0f, 0.01f, 11.0f, 9.0f),
-Box(1.0f, 0.01f, 17.0f, 9.0f),
-Box(1.0f, 0.01f, 19.0f, 9.0f),
-Box(2.0f, 0.01f, 0.0f, 10.0f),
-Box(3.0f, 0.01f, 6.0f, 10.0f),
-Box(1.0f, 0.01f, 12.0f, 10.0f),
-Box(1.0f, 0.01f, 15.0f, 10.0f),
-Box(1.0f, 0.01f, 18.0f, 10.0f),
-Box(2.0f, 0.01f, 1.0f, 11.0f),
-Box(1.0f, 0.01f, 5.0f, 11.0f),
-Box(3.0f, 0.01f, 9.0f, 11.0f),
-Box(1.0f, 0.01f, 16.0f, 11.0f),
-Box(1.0f, 0.01f, 19.0f, 11.0f),
-Box(2.0f, 0.01f, 0.0f, 12.0f),
-Box(4.0f, 0.01f, 4.0f, 12.0f),
-Box(3.0f, 0.01f, 10.0f, 12.0f),
-Box(2.0f, 0.01f, 14.0f, 12.0f),
-Box(3.0f, 0.01f, 17.0f, 12.0f),
-Box(1.0f, 0.01f, 1.0f, 13.0f),
-Box(3.0f, 0.01f, 3.0f, 13.0f),
-Box(1.0f, 0.01f, 8.0f, 13.0f),
-Box(1.0f, 0.01f, 10.0f, 13.0f),
-Box(2.0f, 0.01f, 12.0f, 13.0f),
-Box(2.0f, 0.01f, 15.0f, 13.0f),
-Box(1.0f, 0.01f, 18.0f, 13.0f),
-Box(3.0f, 0.01f, 2.0f, 14.0f),
-Box(2.0f, 0.01f, 7.0f, 14.0f),
-Box(2.0f, 0.01f, 11.0f, 14.0f),
-Box(2.0f, 0.01f, 14.0f, 14.0f),
-Box(2.0f, 0.01f, 18.0f, 14.0f),
-Box(2.0f, 0.01f, 3.0f, 15.0f),
-Box(5.0f, 0.01f, 8.0f, 15.0f),
-Box(1.0f, 0.01f, 0.0f, 16.0f),
-Box(4.0f, 0.01f, 2.0f, 16.0f),
-Box(1.0f, 0.01f, 7.0f, 16.0f),
-Box(1.0f, 0.01f, 9.0f, 16.0f),
-Box(1.0f, 0.01f, 13.0f, 16.0f),
-Box(2.0f, 0.01f, 16.0f, 16.0f),
-Box(2.0f, 0.01f, 1.0f, 17.0f),
-Box(1.0f, 0.01f, 4.0f, 17.0f),
-Box(1.0f, 0.01f, 7.0f, 17.0f),
-Box(2.0f, 0.01f, 11.0f, 17.0f),
-Box(1.0f, 0.01f, 15.0f, 17.0f),
-Box(1.0f, 0.01f, 18.0f, 17.0f),
-Box(2.0f, 0.01f, 2.0f, 18.0f),
-Box(1.0f, 0.01f, 8.0f, 18.0f),
-Box(1.0f, 0.01f, 10.0f, 18.0f),
-Box(1.0f, 0.01f, 13.0f, 18.0f),
-Box(2.0f, 0.01f, 16.0f, 18.0f),
-Box(1.0f, 0.01f, 1.0f, 19.0f),
-Box(1.0f, 0.01f, 7.0f, 19.0f),
-Box(1.0f, 0.01f, 14.0f, 19.0f),
-Box(1.0f, 0.01f, 17.0f, 19.0f),
-Box(9.0f, 0.01f, 0.0f, 20.0f),
-Box(10.0f, 0.01f, 10.0f, 20.0f),
-
-		//vertical walls
-		Box(0.01f, 20.0f, 0.0f, 20.0f),
-		Box(0.01f, 2.0f, 1.0f, 18.0f),
-		Box(0.01f, 2.0f, 1.0f, 15.0f),
-		Box(0.01f, 1.0f, 1.0f, 9.0f),
-		Box(0.01f, 2.0f, 1.0f, 5.0f),
-		
-		Box(0.01f, 1.0f, 2.0f, 19.0f),
-		Box(0.01f, 2.0f, 2.0f, 16.0f),
-		Box(0.01f, 1.0f, 2.0f, 13.0f),
-		Box(0.01f, 3.0f, 2.0f, 8.0f),
-		Box(0.01f, 1.0f, 2.0f, 3.0f),
-		Box(0.01f, 1.0f, 2.0f, 1.0f),
-		
-		Box(0.01f, 1.0f, 3.0f, 20.0f),
-		Box(0.01f, 1.0f, 3.0f, 18.0f),
-		Box(0.01f, 3.0f, 3.0f, 13.0f),
-		Box(0.01f, 1.0f, 3.0f, 8.0f),
-		Box(0.01f, 3.0f, 3.0f, 6.0f),
-		Box(0.01f, 1.0f, 3.0f, 2.0f),
-		
-		Box(0.01f, 1.0f, 4.0f, 19.0f),
-		Box(0.01f, 1.0f, 4.0f, 17.0f),
-		Box(0.01f, 2.0f, 4.0f, 12.0f),
-		Box(0.01f, 2.0f, 4.0f, 8.0f),
-		Box(0.01f, 3.0f, 4.0f, 5.0f),
-		
-		Box(0.01f, 2.0f, 5.0f, 19.0f),
-		Box(0.01f, 1.0f, 5.0f, 15.0f),
-		Box(0.01f, 4.0f, 5.0f, 11.0f),
-		Box(0.01f, 1.0f, 5.0f, 6.0f),
-		Box(0.01f, 1.0f, 5.0f, 1.0f),
-		
-		Box(0.01f, 7.0f, 6.0f, 20.0f),
-		Box(0.01f, 1.0f, 6.0f, 12.0f),
-		Box(0.01f, 1.0f, 6.0f, 10.0f),
-		Box(0.01f, 2.0f, 6.0f, 7.0f),
-		Box(0.01f, 1.0f, 6.0f, 4.0f),
-		Box(0.01f, 1.0f, 6.0f, 2.0f),
-		
-		Box(0.01f, 2.0f, 7.0f, 19.0f),
-		Box(0.01f, 4.0f, 7.0f, 16.0f),
-		Box(0.01f, 1.0f, 7.0f, 11.0f),
-		Box(0.01f, 1.0f, 7.0f, 7.0f),
-		Box(0.01f, 1.0f, 7.0f, 3.0f),
-		
-		Box(0.01f, 7.0f, 8.0f, 17.0f),
-		Box(0.01f, 1.0f, 8.0f, 12.0f),
-		Box(0.01f, 1.0f, 8.0f, 9.0f),
-		Box(0.01f, 1.0f, 8.0f, 7.0f),
-		
-		Box(0.01f, 4.0f, 9.0f, 20.0f),
-		Box(0.01f, 4.0f, 9.0f, 13.0f),
-		Box(0.01f, 1.0f, 9.0f, 8.0f),
-		Box(0.01f, 2.0f, 9.0f, 6.0f),
-		Box(0.01f, 1.0f, 9.0f, 2.0f),
-		
-		Box(0.01f, 1.0f, 10.0f, 20.0f),
-		Box(0.01f, 2.0f, 10.0f, 18.0f),
-		Box(0.01f, 3.0f, 10.0f, 15.0f),
-		Box(0.01f, 5.0f, 10.0f, 10.0f),
-		
-		Box(0.01f, 1.0f, 11.0f, 19.0f),
-		Box(0.01f, 1.0f, 11.0f, 16.0f),
-		Box(0.01f, 2.0f, 11.0f, 11.0f),
-		Box(0.01f, 2.0f, 11.0f, 7.0f),
-		Box(0.01f, 2.0f, 11.0f, 4.0f),
-		Box(0.01f, 1.0f, 11.0f, 1.0f),
-		
-		Box(0.01f, 4.0f, 12.0f, 20.0f),
-		Box(0.01f, 2.0f, 12.0f, 9.0f),
-		Box(0.01f, 1.0f, 12.0f, 6.0f),
-		Box(0.01f, 1.0f, 12.0f, 3.0f),
-		
-		Box(0.01f, 1.0f, 13.0f, 19.0f),
-		Box(0.01f, 1.0f, 13.0f, 15.0f),
-		Box(0.01f, 6.0f, 13.0f, 12.0f),
-		Box(0.01f, 1.0f, 13.0f, 5.0f),
-		Box(0.01f, 1.0f, 13.0f, 2.0f),
-		
-		Box(0.01f, 1.0f, 14.0f, 20.0f),
-		Box(0.01f, 6.0f, 14.0f, 18.0f),
-		Box(0.01f, 3.0f, 14.0f, 11.0f),
-		Box(0.01f, 1.0f, 14.0f, 6.0f),
-		Box(0.01f, 4.0f, 14.0f, 4.0f),
-		
-		Box(0.01f, 1.0f, 15.0f, 19.0f),
-		Box(0.01f, 2.0f, 15.0f, 17.0f),
-		Box(0.01f, 3.0f, 15.0f, 12.0f),
-		Box(0.01f, 3.0f, 15.0f, 7.0f),
-		Box(0.01f, 2.0f, 15.0f, 3.0f),
-		
-		Box(0.01f, 3.0f, 16.0f, 20.0f),
-		Box(0.01f, 2.0f, 16.0f, 16.0f),
-		Box(0.01f, 2.0f, 16.0f, 10.0f),
-		Box(0.01f, 1.0f, 16.0f, 5.0f),
-		Box(0.01f, 1.0f, 16.0f, 3.0f),
-		
-		Box(0.01f, 1.0f, 17.0f, 17.0f),
-		Box(0.01f, 6.0f, 17.0f, 15.0f),
-		Box(0.01f, 1.0f, 17.0f, 8.0f),
-		Box(0.01f, 1.0f, 17.0f, 6.0f),
-		Box(0.01f, 1.0f, 17.0f, 2.0f),
-		
-		Box(0.01f, 1.0f, 18.0f, 20.0f),
-		Box(0.01f, 1.0f, 18.0f, 18.0f),
-		Box(0.01f, 3.0f, 18.0f, 16.0f),
-		Box(0.01f, 1.0f, 18.0f, 11.0f),
-		Box(0.01f, 1.0f, 18.0f, 9.0f),
-		Box(0.01f, 1.0f, 18.0f, 7.0f),
-		Box(0.01f, 1.0f, 18.0f, 4.0f),
-		
-		Box(0.01f, 4.0f, 19.0f, 19.0f),
-		Box(0.01f, 1.0f, 19.0f, 10.0f),
-		Box(0.01f, 1.0f, 19.0f, 8.0f),
-		Box(0.01f, 1.0f, 19.0f, 5.0f),
-		Box(0.01f, 1.0f, 19.0f, 2.0f),
-		
-		Box(0.01f, 20.0f, 20.0f, 20.0f)
-		
-		
-	};
+	std::array<Box, 197> boxMaze;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -458,6 +260,7 @@ bool ShapesApp::Initialize()
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.02f, 4.0f, 0.15f);
 	
     LoadTextures();
+	loadMazeWalls();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildShapeGeometry();
@@ -1775,7 +1578,7 @@ void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMAT
 void ShapesApp::buildWaterwall(float xLen, float zLen, float xPos, float zPos)
 {
 	auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 20, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
+			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 30, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
 			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
 			waterRitem->ObjCBIndex = objCBIndex++;
 			waterRitem->Mat = mMaterials["water0"].get();
@@ -2004,21 +1807,24 @@ void ShapesApp::BuildRenderItems()
 
 
 	float mScale = 7.0f;
-	float normalizer = 18.0f;
+	float normalizer = 18.0f * 7;
 	float mazeZOffset = -110.0f;
 	float mazeXOffset = 3.5f;
+	
 	for(int i = 0; i< 98; i++)
 	{
-		buildWaterwall(boxMaze[i].widthX/normalizer, boxMaze[i].lengthZ,  
-			-10.0f * mScale + (mScale*(boxMaze[i].posX + boxMaze[i].widthX/2.0f) + mazeXOffset),
-			-10.0f * mScale + (mScale*boxMaze[i].posZ ) + mazeZOffset);
+		buildWaterwall(boxMaze[i].widthX/normalizer, boxMaze[i].lengthZ/7,  
+			boxMaze[i].posX,
+			boxMaze[i].posZ );
+		
 	}
 	for(int i = 98; i< boxMaze.size(); i++)
 	{
-		buildWaterwall(boxMaze[i].widthX, boxMaze[i].lengthZ/normalizer,  
-			-10.0f * mScale + (mScale* boxMaze[i].posX + mazeXOffset),
-			-10.0f * mScale + (mScale* (boxMaze[i].posZ - boxMaze[i].lengthZ/2.0f) ) + mazeZOffset);
+		buildWaterwall(boxMaze[i].widthX/7, boxMaze[i].lengthZ/normalizer,  
+			boxMaze[i].posX ,
+			boxMaze[i].posZ);
 	}
+
 }
 
 
@@ -2147,3 +1953,23 @@ XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float ma
 
 	return pos;
 }
+
+void ShapesApp::loadMazeWalls()
+{
+	int numWalls = 197;
+	std::ifstream fin("mazeWalls.txt");
+	if(fin.is_open())
+	{
+		for(int i = 0; i < numWalls; i++)
+		{
+			fin >> boxMaze[i].widthX >> boxMaze[i].lengthZ >> boxMaze[i].posX >> boxMaze[i].posZ;
+		}
+	}
+	else
+	{
+		MessageBox(0, L"mazeWalls.txt not found.", 0, 0);
+	}
+	
+}
+
+
