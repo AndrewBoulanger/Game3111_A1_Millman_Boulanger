@@ -11,6 +11,7 @@
 #include "UploadBuffer.h"
 #include "GeometryGenerator.h"
 #include "FrameResource.h"
+#include "Waves.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -93,6 +94,7 @@ private:
 	void UpdateObjectCBs(const GameTimer& gt);
     void UpdateMaterialCBs(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
+	void UpdateWaves(const GameTimer& gt); 
 
     void LoadTextures();
     void BuildRootSignature();
@@ -101,6 +103,7 @@ private:
     void BuildShadersAndInputLayout();
     void BuildShapeGeometry();
 	void BuildTreeSpritesGeometry();
+	void BuildWavesGeometry();
     void BuildPSOs();
     void BuildFrameResources();
     void BuildMaterials();
@@ -136,10 +139,13 @@ private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mStdInputLayout;
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mTreeSpriteInputLayout;
 
+	RenderItem* mWavesRitem = nullptr;
+	
 	// List of all the render items.
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
 
-
+	std::unique_ptr<Waves> mWaves;
+	
 	// Render items divided by PSO.
 	std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
 
@@ -161,6 +167,8 @@ private:
     POINT mLastMousePos;
 
     UINT objCBIndex = 0;
+
+	float waterMoveRate = 0.05f;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -207,11 +215,14 @@ bool ShapesApp::Initialize()
 
     mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.02f, 4.0f, 0.15f);
+	
     LoadTextures();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildShapeGeometry();
 	BuildTreeSpritesGeometry();
+	BuildWavesGeometry();
     BuildMaterials();
     BuildRenderItems();
     BuildFrameResources();
@@ -261,6 +272,7 @@ void ShapesApp::Update(const GameTimer& gt)
 	UpdateObjectCBs(gt);
     UpdateMaterialCBs(gt);
 	UpdateMainPassCB(gt);
+	UpdateWaves(gt);
 }
 
 void ShapesApp::Draw(const GameTimer& gt)
@@ -406,20 +418,23 @@ void ShapesApp::UpdateCamera(const GameTimer& gt)
 
 void ShapesApp::AnimateMaterials(const GameTimer& gt)
 {
+	waterMoveRate += gt.DeltaTime();
+	if(waterMoveRate >=360)
+		waterMoveRate = 0;
 	// Scroll the water material texture coordinates.
 	auto waterMat = mMaterials["water0"].get();
 
 	float& tu = waterMat->MatTransform(3, 0);
 	float& tv = waterMat->MatTransform(3, 1);
 
-	/*tu -= 0.1f * gt.DeltaTime();*/
-	tv -= 0.2f * gt.DeltaTime();
+	tu =  sin(waterMoveRate)*0.02;
+//	tv += 0.04f * gt.DeltaTime();
 
-	/*if (tu <= 0.0f)
-		tu += 1.0f;*/
+	//if (tu >= 1.0f )
+	//	waterMoveRate -= 1.0f ;
 
-	if (tv <= 0.0f)
-		tv += 1.0f;
+	if (tv >= 1.0f)
+		tv -= 1.0f;
 
 	waterMat->MatTransform(3, 0) = tu;
 	waterMat->MatTransform(3, 1) = tv;
@@ -549,6 +564,47 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 	currPassCB->CopyData(0, mMainPassCB);
 }
 
+
+void ShapesApp::UpdateWaves(const GameTimer& gt)
+{
+	// Every quarter second, generate a random wave.
+	static float t_base = 0.0f;
+	if((mTimer.TotalTime() - t_base) >= 0.25f)
+	{
+		t_base += 0.25f;
+
+		int i = MathHelper::Rand(4, mWaves->RowCount() - 5);
+		int j = MathHelper::Rand(4, mWaves->ColumnCount() - 5);
+
+		float r = MathHelper::RandF(0.1f, 0.3f);
+
+		mWaves->Disturb(i, j, r);
+	}
+
+	// Update the wave simulation.
+	mWaves->Update(gt.DeltaTime());
+
+	// Update the wave vertex buffer with the new solution.
+	auto currWavesVB = mCurrFrameResource->WavesVB.get();
+	for(int i = 0; i < mWaves->VertexCount(); ++i)
+	{
+		Vertex v;
+
+		v.Pos = mWaves->Position(i);
+		v.Normal = mWaves->Normal(i);
+		
+		// Derive tex-coords from position by 
+		// mapping [-w/2,w/2] --> [0,1]
+		v.TexC.x = 0.5f + v.Pos.x / mWaves->Width();
+		v.TexC.y = 0.5f - v.Pos.z / mWaves->Depth();
+
+		currWavesVB->CopyData(i, v);
+	}
+
+	// Set the dynamic VB of the wave renderitem to the current frame VB.
+	mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
+}
+
 void ShapesApp::LoadTextures()
 {
 	auto bricksTex = std::make_unique<Texture>();
@@ -574,7 +630,7 @@ void ShapesApp::LoadTextures()
 
     auto waterTex = std::make_unique<Texture>();
     waterTex->Name = "waterTex";
-    waterTex->Filename = L"Textures/water1.dds";
+    waterTex->Filename = L"Textures/waterTex 2.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), waterTex->Filename.c_str(),
         waterTex->Resource, waterTex->UploadHeap));
@@ -1122,6 +1178,62 @@ void ShapesApp::BuildShapeGeometry()
 	mGeometries[geo->Name] = std::move(geo);
 }
 
+void ShapesApp::BuildWavesGeometry()
+{
+    std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
+	assert(mWaves->VertexCount() < 0x0000ffff);
+
+    // Iterate over each quad.
+    int m = mWaves->RowCount();
+    int n = mWaves->ColumnCount();
+    int k = 0;
+    for(int i = 0; i < m - 1; ++i)
+    {
+        for(int j = 0; j < n - 1; ++j)
+        {
+            indices[k] = i*n + j;
+            indices[k + 1] = i*n + j + 1;
+            indices[k + 2] = (i + 1)*n + j;
+
+            indices[k + 3] = (i + 1)*n + j;
+            indices[k + 4] = i*n + j + 1;
+            indices[k + 5] = (i + 1)*n + j + 1;
+
+            k += 6; // next quad
+        }
+    }
+
+	UINT vbByteSize = mWaves->VertexCount()*sizeof(Vertex);
+	UINT ibByteSize = (UINT)indices.size()*sizeof(std::uint16_t);
+
+	auto geo = std::make_unique<MeshGeometry>();
+	geo->Name = "waterGeo";
+
+	// Set dynamically.
+	geo->VertexBufferCPU = nullptr;
+	geo->VertexBufferGPU = nullptr;
+
+	ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
+	CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+
+	geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+		mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
+
+	geo->VertexByteStride = sizeof(Vertex);
+	geo->VertexBufferByteSize = vbByteSize;
+	geo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	geo->IndexBufferByteSize = ibByteSize;
+
+	SubmeshGeometry submesh;
+	submesh.IndexCount = (UINT)indices.size();
+	submesh.StartIndexLocation = 0;
+	submesh.BaseVertexLocation = 0;
+
+	geo->DrawArgs["grid"] = submesh;
+
+	mGeometries["waterGeo"] = std::move(geo);
+}
+
 void ShapesApp::BuildTreeSpritesGeometry()
 {
 	//step5
@@ -1301,7 +1413,7 @@ void ShapesApp::BuildFrameResources()
     for(int i = 0; i < gNumFrameResources; ++i)
     {
         mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size()));
+            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size(), mWaves->VertexCount()));
     }
 }
 
@@ -1343,7 +1455,7 @@ void ShapesApp::BuildMaterials()
 	Water0->Name = "water0";
 	Water0->MatCBIndex = 4;
 	Water0->DiffuseSrvHeapIndex = 4;
-	Water0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
+	Water0->DiffuseAlbedo = XMFLOAT4(0.8f, 0.8f, 0.8f, 0.7f);
 	Water0->FresnelR0 = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	Water0->Roughness = 0.0f;
 
@@ -1428,7 +1540,7 @@ void ShapesApp::BuildRenderItems()
     float radius = sqrt(w2 * w2 + d2 * d2);
 
     auto gridRitem = std::make_unique<RenderItem>();
-    XMMATRIX gridWorld = XMMatrixTranslation(0.0f, 0.1f, 0.0f);
+    XMMATRIX gridWorld = XMMatrixTranslation(0.0f, 1.5f, 0.0f);
 
 	
     SetRenderItemInfo(*gridRitem, "grid",gridWorld, "sand0", RenderLayer::Opaque);
@@ -1512,10 +1624,7 @@ void ShapesApp::BuildRenderItems()
         auto prismRitem = std::make_unique<RenderItem>();
 
         XMMATRIX PrismWorld = XMMatrixScaling(1.0f, 4.0f, width - 3) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius, 10.5f, sRadius);
-		XMMATRIX Prismtexworld = XMMatrixScaling(5.0f, 1.0f, width );
-
-	
-		
+		XMMATRIX Prismtexworld = XMMatrixScaling(1.0f, 1.0f, width );
 		XMStoreFloat4x4(&prismRitem.get()->TexTransform, Prismtexworld);
        
         SetRenderItemInfo(*prismRitem, "prism", PrismWorld, "stone0", RenderLayer::Opaque);
@@ -1547,17 +1656,34 @@ void ShapesApp::BuildRenderItems()
 	auto sandDunesRitem = std::make_unique<RenderItem>();
 	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -5, 0);
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
+	XMMATRIX sandTexworld = XMMatrixScaling(3, 3, 2 );
+		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
-	/*bool bWaterRotate;*/
-    for (int i = 0; i < 4; i++)
-    {
 
+	auto waterRitem = std::make_unique<RenderItem>();
+        XMMATRIX WaterWorld = XMMatrixScaling(1.8f, 1.0, 1.8f)  * XMMatrixTranslation(0.0f, -1.0f,0.0f);
+		XMStoreFloat4x4(&waterRitem->World, WaterWorld);
+		waterRitem->ObjCBIndex = objCBIndex++;
+		waterRitem->Mat = mMaterials["water0"].get();
+		waterRitem->Geo = mGeometries["waterGeo"].get();
+		waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
+		waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+		waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+		mWavesRitem = waterRitem.get();
+
+		mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
+		XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2 );
+		XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+		mAllRitems.push_back(std::move(waterRitem));
+
+    for (int i = 0; i < 3; i++)
+    {
         float theta = i * thetaSquareStep;
         float sRadius = w2 * sinf(theta);
         float cRadius = w2 * cosf(theta);
 		XMMATRIX texworld = XMMatrixScaling(4.0f, 1.0f, width * 2);
-		
         
         auto boxRitem = std::make_unique<RenderItem>();
         XMMATRIX Moatworld = XMMatrixScaling(2.0f, 10.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius *2  , 2.0f, sRadius *2);
@@ -1565,27 +1691,9 @@ void ShapesApp::BuildRenderItems()
         SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(boxRitem));
         
-		//this code modulates and moves the textures in the same direction for the 4 water quads, but changes the shape of the water as well
-		/* bWaterRotate = (i == 1 || i == 3);
-		 if (bWaterRotate){
-			*/
-			
-			/*auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(0.5f, 1.0, 2.0f) * XMMatrixRotationY(-theta) * XMMatrixTranslation(cRadius * 1.5, -0.05f * i, sRadius * 1.5);
-			SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
-			mAllRitems.push_back(std::move(waterRitem));*/
-		/*}
-		 else {
-			 auto waterRitem = std::make_unique<RenderItem>();
-			 XMMATRIX WaterWorld = XMMatrixScaling(2.0f, 1.0, 2.0f) * XMMatrixRotationY(XM_PIDIV2) * XMMatrixTranslation(cRadius * 1.5, -0.05f * i, sRadius * 1.5);
-			 SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
-			 mAllRitems.push_back(std::move(waterRitem));
-		 }*/
+
     }
-	auto waterRitem = std::make_unique<RenderItem>();
-	XMMATRIX WaterWorld = XMMatrixScaling(2.0f, 10.0, 2.0f);
-	SetRenderItemInfo(*waterRitem, "grid", WaterWorld, "water0", RenderLayer::Transparent);
-	mAllRitems.push_back(std::move(waterRitem));
+
     //smaller, front walls
     for (int i = 0; i < 2; i++)
     {
