@@ -33,6 +33,22 @@ enum class RenderLayer : int
 	Count
 };
 
+struct Box
+{
+	Box() = default;
+	float widthX = 0;
+	float lengthZ = 0;
+	float posX = 0;
+	float posZ = 0;
+	Box(float w, float l, float x, float z)
+	{
+		widthX = w;
+		lengthZ = l;
+		posX = x;
+		posZ = z;
+	}
+};
+
 // Lightweight structure stores parameters to draw a shape.  This will
 // vary from app-to-app.
 struct RenderItem
@@ -109,6 +125,7 @@ private:
     void BuildMaterials();
     void SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform, std::string material, RenderLayer layer);
     void BuildRenderItems();
+	void buildWaterwall(float xLen, float zLen, float xPos, float zPos);
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
  
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
@@ -169,6 +186,229 @@ private:
     UINT objCBIndex = 0;
 
 	float waterMoveRate = 0.05f;
+
+	std::array<Box, 197> boxMaze = {
+Box(10.0f, 0.01f, 0.0f, 0.0f),
+Box(9.0f, 0.01f, 11.0f, 0.0f),
+Box(1.0f, 0.01f, 1.0f, 1.0f),
+Box(1.0f, 0.01f, 3.0f, 1.0f),
+Box(1.0f, 0.01f, 6.0f, 1.0f),
+Box(4.0f, 0.01f, 9.0f, 1.0f),
+Box(3.0f, 0.01f, 15.0f, 1.0f),
+Box(2.0f, 0.01f, 1.0f, 2.0f),
+Box(4.0f, 0.01f, 4.0f, 2.0f),
+Box(2.0f, 0.01f, 9.0f, 2.0f),
+Box(2.0f, 0.01f, 18.0f, 2.0f),
+Box(1.0f, 0.01f, 0.0f, 3.0f),
+Box(1.0f, 0.01f, 2.0f, 3.0f),
+Box(1.0f, 0.01f, 5.0f, 3.0f),
+Box(2.0f, 0.01f, 8.0f, 3.0f),
+Box(2.0f, 0.01f, 12.0f, 3.0f),
+Box(4.0f, 0.01f, 15.0f, 3.0f),
+Box(1.0f, 0.01f, 1.0f, 4.0f),
+Box(3.0f, 0.01f, 4.0f, 4.0f),
+Box(4.0f, 0.01f, 9.0f, 4.0f),
+Box(4.0f, 0.01f, 14.0f, 4.0f),
+Box(1.0f, 0.01f, 19.0f, 4.0f),
+Box(2.0f, 0.01f, 6.0f, 5.0f),
+Box(1.0f, 0.01f, 10.0f, 5.0f),
+Box(1.0f, 0.01f, 13.0f, 5.0f),
+Box(1.0f, 0.01f, 18.0f, 5.0f),
+Box(1.0f, 0.01f, 0.0f, 6.0f),
+Box(4.0f, 0.01f, 2.0f, 6.0f),
+Box(1.0f, 0.01f, 12.0f, 6.0f),
+Box(1.0f, 0.01f, 15.0f, 6.0f),
+Box(3.0f, 0.01f, 17.0f, 6.0f),
+Box(1.0f, 0.01f, 1.0f, 7.0f),
+Box(3.0f, 0.01f, 7.0f, 7.0f),
+Box(1.0f, 0.01f, 11.0f, 7.0f),
+Box(3.0f, 0.01f, 13.0f, 7.0f),
+Box(1.0f, 0.01f, 18.0f, 7.0f),
+Box(1.0f, 0.01f, 0.0f, 8.0f),
+Box(1.0f, 0.01f, 3.0f, 8.0f),
+Box(2.0f, 0.01f, 5.0f, 8.0f),
+Box(1.0f, 0.01f, 10.0f, 8.0f),
+Box(3.0f, 0.01f, 14.0f, 8.0f),
+Box(4.0f, 0.01f, 1.0f, 9.0f),
+Box(2.0f, 0.01f, 6.0f, 9.0f),
+Box(1.0f, 0.01f, 11.0f, 9.0f),
+Box(1.0f, 0.01f, 17.0f, 9.0f),
+Box(1.0f, 0.01f, 19.0f, 9.0f),
+Box(2.0f, 0.01f, 0.0f, 10.0f),
+Box(3.0f, 0.01f, 6.0f, 10.0f),
+Box(1.0f, 0.01f, 12.0f, 10.0f),
+Box(1.0f, 0.01f, 15.0f, 10.0f),
+Box(1.0f, 0.01f, 18.0f, 10.0f),
+Box(2.0f, 0.01f, 1.0f, 11.0f),
+Box(1.0f, 0.01f, 5.0f, 11.0f),
+Box(3.0f, 0.01f, 9.0f, 11.0f),
+Box(1.0f, 0.01f, 16.0f, 11.0f),
+Box(1.0f, 0.01f, 19.0f, 11.0f),
+Box(2.0f, 0.01f, 0.0f, 12.0f),
+Box(4.0f, 0.01f, 4.0f, 12.0f),
+Box(3.0f, 0.01f, 10.0f, 12.0f),
+Box(2.0f, 0.01f, 14.0f, 12.0f),
+Box(3.0f, 0.01f, 17.0f, 12.0f),
+Box(1.0f, 0.01f, 1.0f, 13.0f),
+Box(3.0f, 0.01f, 3.0f, 13.0f),
+Box(1.0f, 0.01f, 8.0f, 13.0f),
+Box(1.0f, 0.01f, 10.0f, 13.0f),
+Box(2.0f, 0.01f, 12.0f, 13.0f),
+Box(2.0f, 0.01f, 15.0f, 13.0f),
+Box(1.0f, 0.01f, 18.0f, 13.0f),
+Box(3.0f, 0.01f, 2.0f, 14.0f),
+Box(2.0f, 0.01f, 7.0f, 14.0f),
+Box(2.0f, 0.01f, 11.0f, 14.0f),
+Box(2.0f, 0.01f, 14.0f, 14.0f),
+Box(2.0f, 0.01f, 18.0f, 14.0f),
+Box(2.0f, 0.01f, 3.0f, 15.0f),
+Box(5.0f, 0.01f, 8.0f, 15.0f),
+Box(1.0f, 0.01f, 0.0f, 16.0f),
+Box(4.0f, 0.01f, 2.0f, 16.0f),
+Box(1.0f, 0.01f, 7.0f, 16.0f),
+Box(1.0f, 0.01f, 9.0f, 16.0f),
+Box(1.0f, 0.01f, 13.0f, 16.0f),
+Box(2.0f, 0.01f, 16.0f, 16.0f),
+Box(2.0f, 0.01f, 1.0f, 17.0f),
+Box(1.0f, 0.01f, 4.0f, 17.0f),
+Box(1.0f, 0.01f, 7.0f, 17.0f),
+Box(2.0f, 0.01f, 11.0f, 17.0f),
+Box(1.0f, 0.01f, 15.0f, 17.0f),
+Box(1.0f, 0.01f, 18.0f, 17.0f),
+Box(2.0f, 0.01f, 2.0f, 18.0f),
+Box(1.0f, 0.01f, 8.0f, 18.0f),
+Box(1.0f, 0.01f, 10.0f, 18.0f),
+Box(1.0f, 0.01f, 13.0f, 18.0f),
+Box(2.0f, 0.01f, 16.0f, 18.0f),
+Box(1.0f, 0.01f, 1.0f, 19.0f),
+Box(1.0f, 0.01f, 7.0f, 19.0f),
+Box(1.0f, 0.01f, 14.0f, 19.0f),
+Box(1.0f, 0.01f, 17.0f, 19.0f),
+Box(9.0f, 0.01f, 0.0f, 20.0f),
+Box(10.0f, 0.01f, 10.0f, 20.0f),
+
+		//vertical walls
+		Box(0.01f, 20.0f, 0.0f, 20.0f),
+		Box(0.01f, 2.0f, 1.0f, 18.0f),
+		Box(0.01f, 2.0f, 1.0f, 15.0f),
+		Box(0.01f, 1.0f, 1.0f, 9.0f),
+		Box(0.01f, 2.0f, 1.0f, 5.0f),
+		
+		Box(0.01f, 1.0f, 2.0f, 19.0f),
+		Box(0.01f, 2.0f, 2.0f, 16.0f),
+		Box(0.01f, 1.0f, 2.0f, 13.0f),
+		Box(0.01f, 3.0f, 2.0f, 8.0f),
+		Box(0.01f, 1.0f, 2.0f, 3.0f),
+		Box(0.01f, 1.0f, 2.0f, 1.0f),
+		
+		Box(0.01f, 1.0f, 3.0f, 20.0f),
+		Box(0.01f, 1.0f, 3.0f, 18.0f),
+		Box(0.01f, 3.0f, 3.0f, 13.0f),
+		Box(0.01f, 1.0f, 3.0f, 8.0f),
+		Box(0.01f, 3.0f, 3.0f, 6.0f),
+		Box(0.01f, 1.0f, 3.0f, 2.0f),
+		
+		Box(0.01f, 1.0f, 4.0f, 19.0f),
+		Box(0.01f, 1.0f, 4.0f, 17.0f),
+		Box(0.01f, 2.0f, 4.0f, 12.0f),
+		Box(0.01f, 2.0f, 4.0f, 8.0f),
+		Box(0.01f, 3.0f, 4.0f, 5.0f),
+		
+		Box(0.01f, 2.0f, 5.0f, 19.0f),
+		Box(0.01f, 1.0f, 5.0f, 15.0f),
+		Box(0.01f, 4.0f, 5.0f, 11.0f),
+		Box(0.01f, 1.0f, 5.0f, 6.0f),
+		Box(0.01f, 1.0f, 5.0f, 1.0f),
+		
+		Box(0.01f, 7.0f, 6.0f, 20.0f),
+		Box(0.01f, 1.0f, 6.0f, 12.0f),
+		Box(0.01f, 1.0f, 6.0f, 10.0f),
+		Box(0.01f, 2.0f, 6.0f, 7.0f),
+		Box(0.01f, 1.0f, 6.0f, 4.0f),
+		Box(0.01f, 1.0f, 6.0f, 2.0f),
+		
+		Box(0.01f, 2.0f, 7.0f, 19.0f),
+		Box(0.01f, 4.0f, 7.0f, 16.0f),
+		Box(0.01f, 1.0f, 7.0f, 11.0f),
+		Box(0.01f, 1.0f, 7.0f, 7.0f),
+		Box(0.01f, 1.0f, 7.0f, 3.0f),
+		
+		Box(0.01f, 7.0f, 8.0f, 17.0f),
+		Box(0.01f, 1.0f, 8.0f, 12.0f),
+		Box(0.01f, 1.0f, 8.0f, 9.0f),
+		Box(0.01f, 1.0f, 8.0f, 7.0f),
+		
+		Box(0.01f, 4.0f, 9.0f, 20.0f),
+		Box(0.01f, 4.0f, 9.0f, 13.0f),
+		Box(0.01f, 1.0f, 9.0f, 8.0f),
+		Box(0.01f, 2.0f, 9.0f, 6.0f),
+		Box(0.01f, 1.0f, 9.0f, 2.0f),
+		
+		Box(0.01f, 1.0f, 10.0f, 20.0f),
+		Box(0.01f, 2.0f, 10.0f, 18.0f),
+		Box(0.01f, 3.0f, 10.0f, 15.0f),
+		Box(0.01f, 5.0f, 10.0f, 10.0f),
+		
+		Box(0.01f, 1.0f, 11.0f, 19.0f),
+		Box(0.01f, 1.0f, 11.0f, 16.0f),
+		Box(0.01f, 2.0f, 11.0f, 11.0f),
+		Box(0.01f, 2.0f, 11.0f, 7.0f),
+		Box(0.01f, 2.0f, 11.0f, 4.0f),
+		Box(0.01f, 1.0f, 11.0f, 1.0f),
+		
+		Box(0.01f, 4.0f, 12.0f, 20.0f),
+		Box(0.01f, 2.0f, 12.0f, 9.0f),
+		Box(0.01f, 1.0f, 12.0f, 6.0f),
+		Box(0.01f, 1.0f, 12.0f, 3.0f),
+		
+		Box(0.01f, 1.0f, 13.0f, 19.0f),
+		Box(0.01f, 1.0f, 13.0f, 15.0f),
+		Box(0.01f, 6.0f, 13.0f, 12.0f),
+		Box(0.01f, 1.0f, 13.0f, 5.0f),
+		Box(0.01f, 1.0f, 13.0f, 2.0f),
+		
+		Box(0.01f, 1.0f, 14.0f, 20.0f),
+		Box(0.01f, 6.0f, 14.0f, 18.0f),
+		Box(0.01f, 3.0f, 14.0f, 11.0f),
+		Box(0.01f, 1.0f, 14.0f, 6.0f),
+		Box(0.01f, 4.0f, 14.0f, 4.0f),
+		
+		Box(0.01f, 1.0f, 15.0f, 19.0f),
+		Box(0.01f, 2.0f, 15.0f, 17.0f),
+		Box(0.01f, 3.0f, 15.0f, 12.0f),
+		Box(0.01f, 3.0f, 15.0f, 7.0f),
+		Box(0.01f, 2.0f, 15.0f, 3.0f),
+		
+		Box(0.01f, 3.0f, 16.0f, 20.0f),
+		Box(0.01f, 2.0f, 16.0f, 16.0f),
+		Box(0.01f, 2.0f, 16.0f, 10.0f),
+		Box(0.01f, 1.0f, 16.0f, 5.0f),
+		Box(0.01f, 1.0f, 16.0f, 3.0f),
+		
+		Box(0.01f, 1.0f, 17.0f, 17.0f),
+		Box(0.01f, 6.0f, 17.0f, 15.0f),
+		Box(0.01f, 1.0f, 17.0f, 8.0f),
+		Box(0.01f, 1.0f, 17.0f, 6.0f),
+		Box(0.01f, 1.0f, 17.0f, 2.0f),
+		
+		Box(0.01f, 1.0f, 18.0f, 20.0f),
+		Box(0.01f, 1.0f, 18.0f, 18.0f),
+		Box(0.01f, 3.0f, 18.0f, 16.0f),
+		Box(0.01f, 1.0f, 18.0f, 11.0f),
+		Box(0.01f, 1.0f, 18.0f, 9.0f),
+		Box(0.01f, 1.0f, 18.0f, 7.0f),
+		Box(0.01f, 1.0f, 18.0f, 4.0f),
+		
+		Box(0.01f, 4.0f, 19.0f, 19.0f),
+		Box(0.01f, 1.0f, 19.0f, 10.0f),
+		Box(0.01f, 1.0f, 19.0f, 8.0f),
+		Box(0.01f, 1.0f, 19.0f, 5.0f),
+		Box(0.01f, 1.0f, 19.0f, 2.0f),
+		
+		Box(0.01f, 20.0f, 20.0f, 20.0f)
+		
+		
+	};
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -1532,6 +1772,26 @@ void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMAT
    
 }
 
+void ShapesApp::buildWaterwall(float xLen, float zLen, float xPos, float zPos)
+{
+	auto waterRitem = std::make_unique<RenderItem>();
+			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 20, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
+			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
+			waterRitem->ObjCBIndex = objCBIndex++;
+			waterRitem->Mat = mMaterials["water0"].get();
+			waterRitem->Geo = mGeometries["waterGeo"].get();
+			waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
+			waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+			waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+			mWavesRitem = waterRitem.get();
+
+			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
+			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
+			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+			mAllRitems.push_back(std::move(waterRitem));
+}
+
 void ShapesApp::BuildRenderItems()
 {
     float thetaSquareStep = XM_2PI /4;  //90 degrees
@@ -1648,7 +1908,6 @@ void ShapesApp::BuildRenderItems()
             SetRenderItemInfo(*boxRitem, "box", MogulWorld, "stone0", RenderLayer::Opaque);
             mAllRitems.push_back(std::move(boxRitem));
         }
-            
     
     }
     //moat walls / outer walls
@@ -1675,25 +1934,13 @@ void ShapesApp::BuildRenderItems()
 		mAllRitems.push_back(std::move(boxRitem));
 
 		if (i == 0 || i == 2) {
-			auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(0.2,81.0, 1.8f) * XMMatrixRotationY(XM_PI) * (XMMatrixTranslation(-20 + (20* i), -1.0f, 0.0f));
-			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
-			waterRitem->ObjCBIndex = objCBIndex++;
-			waterRitem->Mat = mMaterials["water0"].get();
-			waterRitem->Geo = mGeometries["waterGeo"].get();
-			waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-			waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
-			waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-			waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
-			mWavesRitem = waterRitem.get();
 
-			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
-			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
-			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
-			mAllRitems.push_back(std::move(waterRitem));
-
+			//buildWaterwall(0.2, 1.8, -20 + (20* i), 0.0f );
+			
 		}
 	}
+
+	
     //smaller, front walls
     for (int i = 0; i < 2; i++)
     {
@@ -1756,7 +2003,22 @@ void ShapesApp::BuildRenderItems()
 	mAllRitems.push_back(std::move(coralSpritesRitem));
 
 
-
+	float mScale = 7.0f;
+	float normalizer = 18.0f;
+	float mazeZOffset = -110.0f;
+	float mazeXOffset = 3.5f;
+	for(int i = 0; i< 98; i++)
+	{
+		buildWaterwall(boxMaze[i].widthX/normalizer, boxMaze[i].lengthZ,  
+			-10.0f * mScale + (mScale*(boxMaze[i].posX + boxMaze[i].widthX/2.0f) + mazeXOffset),
+			-10.0f * mScale + (mScale*boxMaze[i].posZ ) + mazeZOffset);
+	}
+	for(int i = 98; i< boxMaze.size(); i++)
+	{
+		buildWaterwall(boxMaze[i].widthX, boxMaze[i].lengthZ/normalizer,  
+			-10.0f * mScale + (mScale* boxMaze[i].posX + mazeXOffset),
+			-10.0f * mScale + (mScale* (boxMaze[i].posZ - boxMaze[i].lengthZ/2.0f) ) + mazeZOffset);
+	}
 }
 
 
