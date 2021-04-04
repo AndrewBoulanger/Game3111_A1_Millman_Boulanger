@@ -41,33 +41,6 @@ struct Box
 	float posX = 0;
 	float posZ = 0;
 
-	float mazeZOffset = -130.0f;
-	float mazeXOffset = 3.5f;
-	Box(float w, float l, float x, float z, bool horizontal = false)
-	{
-		widthX = w ;
-		lengthZ = l ;
-		posX = x ;
-		posZ = z;
-
-	}
-
-	/*	float mScale = 7.0f;
-	float normalizer = 18.0f;
-	float mazeZOffset = -110.0f;
-	float mazeXOffset = 3.5f;
-	for(int i = 0; i< 98; i++)
-	{
-		buildWaterwall(boxMaze[i].widthX/normalizer, boxMaze[i].lengthZ,  
-			-10.0f * mScale + (mScale*(boxMaze[i].posX + boxMaze[i].widthX/2.0f) + mazeXOffset),
-			-10.0f * mScale + (mScale*boxMaze[i].posZ ) + mazeZOffset);
-	}
-	for(int i = 98; i< boxMaze.size(); i++)
-	{
-		buildWaterwall(boxMaze[i].widthX, boxMaze[i].lengthZ/normalizer,  
-			-10.0f * mScale + (mScale* boxMaze[i].posX + mazeXOffset),
-			-10.0f * mScale + (mScale* (boxMaze[i].posZ - boxMaze[i].lengthZ/2.0f) ) + mazeZOffset);
-	}*/
 };
 
 // Lightweight structure stores parameters to draw a shape.  This will
@@ -1578,7 +1551,7 @@ void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMAT
 void ShapesApp::buildWaterwall(float xLen, float zLen, float xPos, float zPos)
 {
 	auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 30, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
+			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 40, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
 			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
 			waterRitem->ObjCBIndex = objCBIndex++;
 			waterRitem->Mat = mMaterials["water0"].get();
@@ -1722,6 +1695,23 @@ void ShapesApp::BuildRenderItems()
 		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
+	auto waterRitem = std::make_unique<RenderItem>();
+			XMMATRIX WaterWorld = XMMatrixScaling(0.8, 1, 0.75) * (XMMatrixTranslation(0, -1.0f, 5));
+			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
+			waterRitem->ObjCBIndex = objCBIndex++;
+			waterRitem->Mat = mMaterials["water0"].get();
+			waterRitem->Geo = mGeometries["waterGeo"].get();
+			waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
+			waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+			waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+			mWavesRitem = waterRitem.get();
+
+			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
+			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
+			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+			mAllRitems.push_back(std::move(waterRitem));
+	
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -1731,14 +1721,14 @@ void ShapesApp::BuildRenderItems()
 		XMMATRIX texworld = XMMatrixScaling(4.0f, 1.0f, width * 2);
 
 		auto boxRitem = std::make_unique<RenderItem>();
-		XMMATRIX Moatworld = XMMatrixScaling(2.0f, 1.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius * 2, 2.0f, sRadius * 2);
+		XMMATRIX Moatworld = XMMatrixScaling(2.0f, 15.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius * 2, 2.0f, sRadius * 2);
 		XMStoreFloat4x4(&boxRitem.get()->TexTransform, texworld);
 		SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
 		mAllRitems.push_back(std::move(boxRitem));
 
 		if (i == 0 || i == 2) {
 
-			//buildWaterwall(0.2, 1.8, -20 + (20* i), 0.0f );
+			buildWaterwall(0.2, 1.2, -20 + (20* i), 0.0f );
 			
 		}
 	}
@@ -1808,8 +1798,7 @@ void ShapesApp::BuildRenderItems()
 
 	float mScale = 7.0f;
 	float normalizer = 18.0f * 7;
-	float mazeZOffset = -110.0f;
-	float mazeXOffset = 3.5f;
+
 	
 	for(int i = 0; i< 98; i++)
 	{
