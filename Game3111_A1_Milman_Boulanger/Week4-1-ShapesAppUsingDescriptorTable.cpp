@@ -289,6 +289,7 @@ void ShapesApp::Update(const GameTimer& gt)
     UpdateMaterialCBs(gt);
 	UpdateMainPassCB(gt);
 	UpdateWaves(gt);
+
 }
 
 void ShapesApp::Draw(const GameTimer& gt)
@@ -459,8 +460,9 @@ void ShapesApp::AnimateMaterials(const GameTimer& gt)
 	waterMat->NumFramesDirty = gNumFrameResources;
 }
 
+
 void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
-{
+{	
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
 	for(auto& e : mAllRitems)
 	{
@@ -1541,8 +1543,6 @@ void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMAT
     Ritem.IndexCount = Ritem.Geo->DrawArgs[itemType].IndexCount;
     Ritem.StartIndexLocation = Ritem.Geo->DrawArgs[itemType].StartIndexLocation;
     Ritem.BaseVertexLocation = Ritem.Geo->DrawArgs[itemType].BaseVertexLocation;
-    //XMMATRIX inverseTransform = XMMatrixTranspose(transform); //MathHelper::InverseTranspose(transform);
-    //XMStoreFloat4x4(&Ritem.TWorld, inverseTransform);
 
      mRitemLayer[(int)layer].push_back(&Ritem);
    
