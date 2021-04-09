@@ -423,7 +423,7 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
         mIsWireframe = false;
 	const float dt = gt.DeltaTime();
 	if (GetAsyncKeyState('W') & 0x8000) //most significant bit (MSB) is 1 when key is pressed (1000 000 000 000)
-		FpsCam.Walk(10.0f * dt);
+		FpsCam.Walk (10.0f * dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
 		FpsCam.Walk(-10.0f * dt);
@@ -433,37 +433,16 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 
 	if (GetAsyncKeyState('D') & 0x8000)
 		FpsCam.Strafe(10.0f * dt);
+	
+	if (GetAsyncKeyState('E') & 0x8000) //COMMENT THIS (E and Q) OUT WHEN WE DONE BUILDING MAP
+		FpsCam.Pedestal(-10.0f * dt);
+
+	if (GetAsyncKeyState('Q') & 0x8000)
+		FpsCam.Pedestal(10.0f * dt);
 
 	FpsCam.UpdateViewMatrix();
 
-	/*float speed = 15.0f * gt.DeltaTime();
-
-	if (keyboardState[(VK_LEFT)] & 0x80)
-	{
-		moveLeftRight -= speed;
-	}
-	if (keyboardState[VK_RIGHT] & 0x80)
-	{
-		moveLeftRight += speed;
-	}
-	if (keyboardState[(VK_UP)] & 0x80)
-	{
-		moveBackForward += speed;
-	}
-	if (keyboardState[(VK_DOWN)] & 0x80)
-	{
-		moveBackForward -= speed;
-	}*/
-	/*if ((mouseCurrState.lX != mLastMousePos.x) || (mouseCurrState.lY != mLastMousePos.y))
-	{
-		camYaw += mLastMousePos.x * 0.001f;
-
-		camPitch += mouseCurrState.lY * 0.001f;
-
-		mLastMousePos.x = mouseCurrState.lX;
-		mLastMousePos.y = mouseCurrState.lY;
-	}*/
-
+	
 	
 
 	return;
