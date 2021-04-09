@@ -236,7 +236,10 @@ bool ShapesApp::Initialize()
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
     mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	FpsCam.SetPosition(0.0f, 2.0f, -15.0f);
+	FpsCam.LookAt(
+		XMFLOAT3(1.0f, 100.0f, -150.0f),
+		XMFLOAT3(0.0f, 0.0f, 0.0f),
+		XMFLOAT3(0.0f, 1.0f, 0.0f));
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.02f, 4.0f, 0.15f);
 	
     LoadTextures();
