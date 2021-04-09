@@ -40,7 +40,8 @@ struct Box
 	float lengthZ = 0;
 	float posX = 0;
 	float posZ = 0;
-
+	BoundingBox bounds;
+	
 };
 
 // Lightweight structure stores parameters to draw a shape.  This will
@@ -184,6 +185,7 @@ private:
 	float waterMoveRate = 0.05f;
 
 	std::array<Box, 197> boxMaze;
+	int boxIndex = 0;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -1549,7 +1551,7 @@ void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMAT
 }
 
 void ShapesApp::buildWaterwall(float xLen, float zLen, float xPos, float zPos)
-{
+{	
 	auto waterRitem = std::make_unique<RenderItem>();
 			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 40, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
 			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
@@ -1797,22 +1799,34 @@ void ShapesApp::BuildRenderItems()
 
 
 	float mScale = 7.0f;
-	float normalizer = 18.0f * 7;
+	float normalizer = 18.0f * mScale;
 
 	
-	for(int i = 0; i< 98; i++)
+	for(int i = 0; i< 197; i++)
 	{
-		buildWaterwall(boxMaze[i].widthX/normalizer, boxMaze[i].lengthZ/7,  
-			boxMaze[i].posX,
-			boxMaze[i].posZ );
+		float width; 
+		float length;
+		if(i < 98)
+		{
+			width = boxMaze[i].widthX/normalizer;
+			length = boxMaze[i].lengthZ/mScale;
+		}
+		else
+		{
+			width = boxMaze[i].widthX/mScale;
+			length = boxMaze[i].lengthZ/normalizer;
+		}
+			//build render item
+			buildWaterwall(width, length,  
+				boxMaze[i].posX, boxMaze[i].posZ );
+		
+		//set bounds
+		boxMaze[i].bounds.Center = { boxMaze[i].posX, 19, boxMaze[i].posZ};
+		boxMaze[i].bounds.Extents = {boxMaze[i].widthX * 0.5f, 20.0f, boxMaze[i].lengthZ * 0.5f};
+
 		
 	}
-	for(int i = 98; i< boxMaze.size(); i++)
-	{
-		buildWaterwall(boxMaze[i].widthX/7, boxMaze[i].lengthZ/normalizer,  
-			boxMaze[i].posX ,
-			boxMaze[i].posZ);
-	}
+	
 
 }
 
