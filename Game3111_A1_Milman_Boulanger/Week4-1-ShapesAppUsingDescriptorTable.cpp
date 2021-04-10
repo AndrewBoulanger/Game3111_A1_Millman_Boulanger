@@ -444,22 +444,22 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
         mIsWireframe = false;
 	const float dt = gt.DeltaTime();
 	if (GetAsyncKeyState('W') & 0x8000) //most significant bit (MSB) is 1 when key is pressed (1000 000 000 000)
-		FpsCam.Walk (10.0f * dt);
+		FpsCam.Walk (50.0f * dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		FpsCam.Walk(-10.0f * dt);
+		FpsCam.Walk(-50.0f * dt);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		FpsCam.Strafe(-10.0f * dt);
+		FpsCam.Strafe(-50.0f * dt);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		FpsCam.Strafe(10.0f * dt);
+		FpsCam.Strafe(50.0f * dt);
 	
 	if (GetAsyncKeyState('E') & 0x8000) //COMMENT THIS (E and Q) OUT WHEN WE DONE BUILDING MAP
-		FpsCam.Pedestal(-10.0f * dt);
+		FpsCam.Pedestal(-50.0f * dt);
 
 	if (GetAsyncKeyState('Q') & 0x8000)
-		FpsCam.Pedestal(10.0f * dt);
+		FpsCam.Pedestal(50.0f * dt);
 
 	FpsCam.UpdateViewMatrix();
 
@@ -1616,13 +1616,13 @@ void ShapesApp::BuildRenderItems()
     float radius = sqrt(w2 * w2 + d2 * d2);
 
     auto gridRitem = std::make_unique<RenderItem>();
+	auto gridRitem2 = std::make_unique<RenderItem>();
     XMMATRIX gridWorld = XMMatrixTranslation(0.0f, 1.5f, 0.0f);
-
-	
+	XMMATRIX gridWorld2 = XMMatrixScaling(4, 0.0f, 4) * XMMatrixTranslation(0.0f, 0, -100);
     SetRenderItemInfo(*gridRitem, "grid",gridWorld, "sand0", RenderLayer::Opaque);
+	SetRenderItemInfo(*gridRitem2, "grid", gridWorld2, "sand0", RenderLayer::Opaque);
 	mAllRitems.push_back(std::move(gridRitem));
-
-   
+	mAllRitems.push_back(std::move(gridRitem2));
     //tower objects
     for (int i = 0; i < 4; ++i)
     {
@@ -1729,7 +1729,7 @@ void ShapesApp::BuildRenderItems()
     //moat walls / outer walls
 
 	auto sandDunesRitem = std::make_unique<RenderItem>();
-	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -5, 0);
+	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -5, 200);
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
 	XMMATRIX sandTexworld = XMMatrixScaling(3, 3, 2 );
 		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
@@ -1962,7 +1962,7 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> ShapesApp::GetStaticSamplers()
 
 float ShapesApp::GetHillsHeight(float x, float z)const
 {
-	return 0.1f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
+		return 0.1f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
 }
 
 XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
