@@ -182,6 +182,7 @@ void Camera::Strafe(float d)
 	XMVECTOR s = XMVectorReplicate(d);
 	XMVECTOR r = XMLoadFloat3(&mRight);
 	XMVECTOR p = XMLoadFloat3(&mPosition);
+	
 	XMStoreFloat3(&mPosition, XMVectorMultiplyAdd(s, r, p));
 
 	mViewDirty = true;
@@ -295,6 +296,28 @@ void Camera::UpdateViewMatrix()
 
 		mViewDirty = false;
 	}
+}
+
+DirectX::XMVECTOR Camera::GetNewBounds(float d, moveType type)
+{
+	XMVECTOR s = XMVectorReplicate(d);
+	XMVECTOR dir;
+	XMVECTOR p= XMLoadFloat3(&mPosition);
+
+	switch (type)
+	{
+	case walk:
+		dir = XMLoadFloat3(&mLook);
+		break;
+	case strafe:
+		dir = XMLoadFloat3(&mRight);
+		break;
+	case pedestal:
+		dir = XMLoadFloat3(&mUp);
+		break;
+	}
+	XMVECTOR curPos = XMLoadFloat3(&mPosition);
+	return  XMVectorMultiplyAdd(s, dir, p) - curPos;
 }
 
 

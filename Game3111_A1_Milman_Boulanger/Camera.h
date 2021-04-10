@@ -13,6 +13,7 @@
 
 #include "d3dUtil.h"
 
+
 class Camera
 {
 public:
@@ -73,7 +74,10 @@ public:
 
 	// After modifying camera position/orientation, call to rebuild the view matrix.
 	void UpdateViewMatrix();
-	BoundingBox FPSBounds;
+
+	DirectX::BoundingBox bounds;
+DirectX::XMVECTOR GetNewBounds(float d, moveType type);
+
 private:
 
 	// Camera coordinate system with coordinates relative to world space.

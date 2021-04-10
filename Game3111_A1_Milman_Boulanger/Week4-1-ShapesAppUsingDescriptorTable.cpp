@@ -49,11 +49,7 @@ struct Box
 	BoundingBox bounds;
 	
 };
-typedef enum ContainmentType {
-	DISJOINT,
-	INTERSECTS,
-	CONTAINS
-};
+
 // Lightweight structure stores parameters to draw a shape.  This will
 // vary from app-to-app.
 struct RenderItem
@@ -157,9 +153,6 @@ private:
 	void loadMazeWalls();
 
 private:
-	bool mFrustumCullingEnabled = true;
-
-	BoundingFrustum FpsFrustNum;
 
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
     FrameResource* mCurrFrameResource = nullptr;
@@ -263,7 +256,7 @@ bool ShapesApp::Initialize()
 		XMFLOAT3(1.0f, 100.0f, -150.0f),
 		XMFLOAT3(0.0f, 0.0f, 0.0f),
 		XMFLOAT3(0.0f, 1.0f, 0.0f));
-	XMStoreFloat3(&FpsCam.FPSBounds.Center, FpsCam.GetPosition());
+	XMStoreFloat3(&FpsCam.bounds.Center, FpsCam.GetPosition());
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.02f, 4.0f, 0.15f);
 	
     LoadTextures();
@@ -302,16 +295,9 @@ void ShapesApp::OnResize()
 void ShapesApp::Update(const GameTimer& gt)
 {
 	bool CollidingWithWalls = false;
-	
-	for (Box e: boxMaze){
-	 if (e.bounds.Intersects(FpsCam.FPSBounds)){
-		 CollidingWithWalls = true;
-		 break;
-	 }
-	 if(!CollidingWithWalls){
 
-		 OnKeyboardInput(gt);
-	 }
+	 OnKeyboardInput(gt);
+	
 
     // Cycle through the circular frame resource array.
     mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
@@ -456,37 +442,79 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
  
 void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 {
+	float walkDist = 0;
+	float strafeDist = 0;
+	float pedestalDist = 0;
+
+	float cSpeed = 25.0f;
+	
     if(GetAsyncKeyState('1') & 0x8000)
         mIsWireframe = true;
     else
         mIsWireframe = false;
 	const float dt = gt.DeltaTime();
 	if (GetAsyncKeyState('W') & 0x8000) //most significant bit (MSB) is 1 when key is pressed (1000 000 000 000)
-		FpsCam.Walk (50.0f * dt);
+		walkDist = cSpeed * dt;
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		FpsCam.Walk(-50.0f * dt);
+		walkDist =-cSpeed * dt;
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		FpsCam.Strafe(-50.0f * dt);
+		strafeDist =-cSpeed * dt;
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		FpsCam.Strafe(50.0f * dt);
+		strafeDist = cSpeed * dt;
 	
-	if (GetAsyncKeyState('E') & 0x8000) //COMMENT THIS (E and Q) OUT WHEN WE DONE BUILDING MAP
-		FpsCam.Pedestal(-50.0f * dt);
+	//if (GetAsyncKeyState('E') & 0x8000) //COMMENT THIS (E and Q) OUT WHEN WE DONE BUILDING MAP
+	//	pedestalDist = -cSpeed * dt;
 
-	if (GetAsyncKeyState('Q') & 0x8000)
-		FpsCam.Pedestal(50.0f * dt);
+	//if (GetAsyncKeyState('Q') & 0x8000)
+	//	pedestalDist = cSpeed * dt;
 
+	XMVECTOR newPos = FpsCam.GetPosition();
+	if(walkDist != 0)
+	{
+		newPos += FpsCam.GetNewBounds(walkDist, walk);
+	}
+	if(strafeDist != 0)
+	{
+		newPos += FpsCam.GetNewBounds(strafeDist, strafe);
+	}
+	//if(strafeDist != 0)
+	//{
+	//	newPos += FpsCam.GetNewBounds(pedestalDist, pedestal);
+	//}
+	if(XMVector3Equal(newPos, XMVectorZero()) )
+	{
+		FpsCam.UpdateViewMatrix();
+		return;
+	}
+
+	
+	BoundingBox newBounds;
+	XMStoreFloat3(&newBounds.Center, newPos);
+	newBounds.Extents = {2.0f, 2.0f, 2.0f};
+	
 	bool noHit = true;
     for (Box e : boxMaze)
     {
-		//if(e.bounds.Intersects(&FpsCam.FPSBounds))
-		//{
-		//	noHit = false;
-		//}
+		if(e.bounds.Contains(newBounds) != DISJOINT)
+		{
+			noHit = false;
+			break;
+		}
     }
+
+	if(noHit)
+	{
+		if(walkDist != 0.0f)
+			FpsCam.Walk(walkDist);
+		if(strafeDist != 0.0f)
+			FpsCam.Strafe(strafeDist);
+	/*	if(pedestalDist != 0.0f)
+			FpsCam.Pedestal(pedestalDist);*/
+	}
+
 	
 	FpsCam.UpdateViewMatrix();
 
@@ -548,20 +576,8 @@ void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
             XMStoreFloat4x4(&objConstants.TWorld, XMMatrixTranspose(MathHelper::InverseTranspose(world)));
             XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
 
-
-			XMMATRIX invWorld = XMMatrixInverse(&XMMatrixDeterminant(world), world);
-
-			// View space to the object's local space.
-			XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
-
-			// step3: Transform the camera frustum from view space to the object's local space.
-			BoundingFrustum localSpaceFrustum;
-			FpsFrustNum.Transform(localSpaceFrustum, viewToLocal);
-
 			
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
-
-			BoundingFrustum localspacefrostnum;
 		
 			// Next FrameResource need to be updated too.
 			e->NumFramesDirty--;
@@ -1658,13 +1674,10 @@ void ShapesApp::BuildRenderItems()
     float radius = sqrt(w2 * w2 + d2 * d2);
 
     auto gridRitem = std::make_unique<RenderItem>();
-	auto gridRitem2 = std::make_unique<RenderItem>();
     XMMATRIX gridWorld = XMMatrixTranslation(0.0f, 1.5f, 0.0f);
-	XMMATRIX gridWorld2 = XMMatrixScaling(4, 0.0f, 4) * XMMatrixTranslation(0.0f, 0, -100);
     SetRenderItemInfo(*gridRitem, "grid",gridWorld, "sand0", RenderLayer::Opaque);
-	SetRenderItemInfo(*gridRitem2, "grid", gridWorld2, "sand0", RenderLayer::Opaque);
 	mAllRitems.push_back(std::move(gridRitem));
-	mAllRitems.push_back(std::move(gridRitem2));
+
     //tower objects
     for (int i = 0; i < 4; ++i)
     {
@@ -1899,15 +1912,12 @@ void ShapesApp::BuildRenderItems()
 			//build render item
 			buildWaterwall(width, length,  
 				boxMaze[i].posX, boxMaze[i].posZ );
-		
-		BoundingBox bounds;
+
+		//set bounds
 		boxMaze[i].bounds.Center = { boxMaze[i].posX, 19, boxMaze[i].posZ};
 		boxMaze[i].bounds.Extents = {boxMaze[i].widthX * 0.5f, 20.0f, boxMaze[i].lengthZ * 0.5f};
 
-		
 	}
-	
-
 }
 
 
@@ -2068,7 +2078,6 @@ void ShapesApp::loadMazeWalls()
 			boxMaze[i].posX *=    2.0f;
 			boxMaze[i].posZ *=    2.0f;
 		}
-
 	}
 	else
 	{
