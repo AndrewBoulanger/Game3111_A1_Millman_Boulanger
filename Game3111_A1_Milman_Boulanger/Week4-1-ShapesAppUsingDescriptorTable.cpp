@@ -12,7 +12,7 @@
 #include "GeometryGenerator.h"
 #include "FrameResource.h"
 #include "Waves.h"
-
+#include "Camera.h"
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -32,6 +32,12 @@ enum class RenderLayer : int
 	AlphaTestedTreeSprites,
 	Count
 };
+typedef struct DIMOUSESTATE {
+	LONG lX;
+	LONG lY;
+	LONG lZ;
+	BYTE rgbButtons[4];
+} DIMOUSESTATE, * LPDIMOUSESTATE;
 
 struct Box
 {
@@ -87,7 +93,23 @@ public:
     ShapesApp(const ShapesApp& rhs) = delete;
     ShapesApp& operator=(const ShapesApp& rhs) = delete;
     ~ShapesApp();
+	Camera FpsCam = Camera();
+	XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	DIMOUSESTATE mouse_state;
+	XMMATRIX camRotationMatrix;
+	XMMATRIX groundWorld;
+	
+	float moveLeftRight = 0.0f;
+	float moveBackForward = 0.0f;
+
+	float camYaw = 0.0f;
+	float camPitch = 0.0f;
     virtual bool Initialize()override;
 
 private:
@@ -231,7 +253,10 @@ bool ShapesApp::Initialize()
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
     mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
+	FpsCam.LookAt(
+		XMFLOAT3(1.0f, 100.0f, -150.0f),
+		XMFLOAT3(0.0f, 0.0f, 0.0f),
+		XMFLOAT3(0.0f, 1.0f, 0.0f));
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.02f, 4.0f, 0.15f);
 	
     LoadTextures();
@@ -263,8 +288,7 @@ void ShapesApp::OnResize()
     D3DApp::OnResize();
 
     // The window resized, so update the aspect ratio and recompute the projection matrix.
-    XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
-    XMStoreFloat4x4(&mProj, P);
+	FpsCam.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 }
 
 void ShapesApp::Update(const GameTimer& gt)
@@ -381,6 +405,7 @@ void ShapesApp::OnMouseUp(WPARAM btnState, int x, int y)
 
 void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
+	
     if((btnState & MK_LBUTTON) != 0)
     {
         // Make each pixel correspond to a quarter of a degree.
@@ -388,11 +413,12 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
         float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
 
         // Update angles based on input to orbit camera around box.
-        mTheta += dx;
-        mPhi += dy;
-
+      /*  mTheta += dx;
+        mPhi += dy;*/
+		FpsCam.Pitch(dy);
+		FpsCam.RotateY(dx);
         // Restrict the angle mPhi.
-        mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
+       
     }
     else if((btnState & MK_RBUTTON) != 0)
     {
@@ -417,22 +443,62 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
         mIsWireframe = true;
     else
         mIsWireframe = false;
+	const float dt = gt.DeltaTime();
+	if (GetAsyncKeyState('W') & 0x8000) //most significant bit (MSB) is 1 when key is pressed (1000 000 000 000)
+		FpsCam.Walk (10.0f * dt);
+
+	if (GetAsyncKeyState('S') & 0x8000)
+		FpsCam.Walk(-10.0f * dt);
+
+	if (GetAsyncKeyState('A') & 0x8000)
+		FpsCam.Strafe(-10.0f * dt);
+
+	if (GetAsyncKeyState('D') & 0x8000)
+		FpsCam.Strafe(10.0f * dt);
+	
+	if (GetAsyncKeyState('E') & 0x8000) //COMMENT THIS (E and Q) OUT WHEN WE DONE BUILDING MAP
+		FpsCam.Pedestal(-10.0f * dt);
+
+	if (GetAsyncKeyState('Q') & 0x8000)
+		FpsCam.Pedestal(10.0f * dt);
+
+	FpsCam.UpdateViewMatrix();
+
+	
+	
+
+	return;
+
 }
  
 void ShapesApp::UpdateCamera(const GameTimer& gt)
 {
-	// Convert Spherical to Cartesian coordinates.
-	mEyePos.x = mRadius*sinf(mPhi)*cosf(mTheta);
-	mEyePos.z = mRadius*sinf(mPhi)*sinf(mTheta);
-	mEyePos.y = mRadius*cosf(mPhi);
+	/*
+		camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
+		XMVECTOR camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
+		camTarget = XMVector3Normalize(camTarget);
 
-	// Build the view matrix.
-	XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-	XMVECTOR target = XMVectorZero();
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		XMMATRIX RotateYTempMatrix;
+		RotateYTempMatrix = XMMatrixRotationY(camYaw);
+		camRight = XMVector3TransformCoord(DefaultRight, RotateYTempMatrix);
+		camUp = XMVector3TransformCoord(DefaultUp, RotateYTempMatrix);
+		camForward = XMVector3TransformCoord(DefaultForward, RotateYTempMatrix);
 
-	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-	XMStoreFloat4x4(&mView, view);
+		XMVECTOR camPosition;
+		camPosition += moveLeftRight * camRight;
+		camPosition += moveBackForward * camForward;
+
+		moveLeftRight = 0.0f;
+		moveBackForward = 0.0f;
+
+		camTarget = camPosition + camTarget;
+
+		FpsCam.LookAt(camPosition, camTarget, camUp);
+		FpsCam.UpdateViewMatrix();
+		mView = FpsCam.GetView4x4f();
+		mProj = FpsCam.GetProj4x4f();
+		mEyePos = FpsCam.GetPosition3f();*/
+
 }
 
 void ShapesApp::AnimateMaterials(const GameTimer& gt)
@@ -519,8 +585,9 @@ void ShapesApp::UpdateMaterialCBs(const GameTimer& gt)
 
 void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 {
-	XMMATRIX view = XMLoadFloat4x4(&mView);
-	XMMATRIX proj = XMLoadFloat4x4(&mProj);
+	XMMATRIX view = FpsCam.GetView();
+	XMMATRIX proj = FpsCam.GetProj();
+	
 
 	XMMATRIX viewProj = XMMatrixMultiply(view, proj);
 	XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
@@ -533,7 +600,7 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 	XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
 	XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
 	XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-	mMainPassCB.EyePosW = mEyePos;
+	mMainPassCB.EyePosW = FpsCam.GetPosition3f();
 	mMainPassCB.RenderTargetSize = XMFLOAT2((float)mClientWidth, (float)mClientHeight);
 	mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / mClientWidth, 1.0f / mClientHeight);
 	mMainPassCB.NearZ = 1.0f;
