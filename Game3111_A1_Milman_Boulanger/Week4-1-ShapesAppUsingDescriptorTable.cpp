@@ -444,22 +444,22 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
         mIsWireframe = false;
 	const float dt = gt.DeltaTime();
 	if (GetAsyncKeyState('W') & 0x8000) //most significant bit (MSB) is 1 when key is pressed (1000 000 000 000)
-		FpsCam.Walk (10.0f * dt);
+		FpsCam.Walk (50.0f * dt);
 
 	if (GetAsyncKeyState('S') & 0x8000)
-		FpsCam.Walk(-10.0f * dt);
+		FpsCam.Walk(-50.0f * dt);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		FpsCam.Strafe(-10.0f * dt);
+		FpsCam.Strafe(-50.0f * dt);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		FpsCam.Strafe(10.0f * dt);
+		FpsCam.Strafe(50.0f * dt);
 	
 	if (GetAsyncKeyState('E') & 0x8000) //COMMENT THIS (E and Q) OUT WHEN WE DONE BUILDING MAP
-		FpsCam.Pedestal(-10.0f * dt);
+		FpsCam.Pedestal(-50.0f * dt);
 
 	if (GetAsyncKeyState('Q') & 0x8000)
-		FpsCam.Pedestal(10.0f * dt);
+		FpsCam.Pedestal(50.0f * dt);
 
 	FpsCam.UpdateViewMatrix();
 
@@ -951,7 +951,7 @@ void ShapesApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
 	GeometryGenerator::MeshData waterGrid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
-    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 8, depth * 8, 60 * 8, 40);
+    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 6, depth * 6, 60 * 8 , 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -1729,9 +1729,9 @@ void ShapesApp::BuildRenderItems()
     //moat walls / outer walls
 
 	auto sandDunesRitem = std::make_unique<RenderItem>();
-	XMMATRIX sandDunesWorld = XMMatrixTranslation(0, -5, 0);
+	XMMATRIX sandDunesWorld = XMMatrixScaling(3.0f, 1.0f, 3.0f) * XMMatrixTranslation(0, -1.0, 0);
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
-	XMMATRIX sandTexworld = XMMatrixScaling(3, 3, 2 );
+	XMMATRIX sandTexworld = XMMatrixScaling(20, 20, 20 );
 		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
@@ -1768,7 +1768,7 @@ void ShapesApp::BuildRenderItems()
 
 		if (i == 0 || i == 2) {
 
-			buildWaterwall(0.2, 1.2, -20 + (20* i), 0.0f );
+			buildWaterwall(0.2, 1.2, -20 + (20* i), -42.0f );
 			
 		}
 	}
@@ -1962,12 +1962,16 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> ShapesApp::GetStaticSamplers()
 
 float ShapesApp::GetHillsHeight(float x, float z)const
 {
-	return 0.1f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
+	if(z > 15 || x < -70 || x > 70)
+		return 0.1f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
+	else return 0.01f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));;
 }
 
 XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
 {
 	// n = (-df/dx, 1, -df/dz)
+	if(z > 15 || x < -70 || x > 70)
+	{
 	XMFLOAT3 n(
 		-0.03f * z * cosf(0.1f * x) - 0.1f * cosf(0.1f * z),
 		1.0f,
@@ -1977,6 +1981,19 @@ XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
 	XMStoreFloat3(&n, unitNormal);
 
 	return n;
+	}
+	else
+	{
+		XMFLOAT3 n(
+		-0.03f * z * cosf(0.01f * x) - 0.01f * cosf(0.01f * z),
+		1.0f,
+		-0.01f * sinf(0.01f * x) + 0.03f * x * sinf(0.01f * z));
+
+	XMVECTOR unitNormal = XMVector3Normalize(XMLoadFloat3(&n));
+	XMStoreFloat3(&n, unitNormal);
+
+	return n;
+	}
 }
 
 XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float maxZ, float treeHeightOffset)const
@@ -2004,10 +2021,10 @@ void ShapesApp::loadMazeWalls()
 		for(int i = 0; i < numWalls; i++)
 		{
 			fin >> boxMaze[i].widthX >> boxMaze[i].lengthZ  >> boxMaze[i].posX >> boxMaze[i].posZ;
-			boxMaze[i].widthX *=  1.5;
-			boxMaze[i].lengthZ *= 1.5;
-			boxMaze[i].posX *=    1.5;
-			boxMaze[i].posZ *=    1.5;
+			boxMaze[i].widthX *=  2.0f;
+			boxMaze[i].lengthZ *= 2.0f;
+			boxMaze[i].posX *=    2.0f;
+			boxMaze[i].posZ *=    2.0f;
 		}
 	}
 	else
