@@ -294,7 +294,6 @@ void ShapesApp::Update(const GameTimer& gt)
 {
     OnKeyboardInput(gt);
 	
-
     // Cycle through the circular frame resource array.
     mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
     mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
@@ -461,6 +460,15 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 	if (GetAsyncKeyState('Q') & 0x8000)
 		FpsCam.Pedestal(50.0f * dt);
 
+	bool noHit = true;
+    for (Box e : boxMaze)
+    {
+		//if(e.bounds.Intersects(&FpsCam.FPSBounds))
+		//{
+		//	noHit = false;
+		//}
+    }
+	
 	FpsCam.UpdateViewMatrix();
 
 	
