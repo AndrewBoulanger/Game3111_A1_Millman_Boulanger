@@ -111,7 +111,6 @@ private:
     virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
 
     void OnKeyboardInput(const GameTimer& gt);
-	void UpdateCamera(const GameTimer& gt);
     void AnimateMaterials(const GameTimer& gt);
 	void UpdateObjectCBs(const GameTimer& gt);
     void UpdateMaterialCBs(const GameTimer& gt);
@@ -276,7 +275,7 @@ void ShapesApp::OnResize()
 void ShapesApp::Update(const GameTimer& gt)
 {
     OnKeyboardInput(gt);
-	UpdateCamera(gt);
+	
 
     // Cycle through the circular frame resource array.
     mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
@@ -452,35 +451,7 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 
 }
  
-void ShapesApp::UpdateCamera(const GameTimer& gt)
-{
-	/*
-		camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
-		XMVECTOR camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
-		camTarget = XMVector3Normalize(camTarget);
 
-		XMMATRIX RotateYTempMatrix;
-		RotateYTempMatrix = XMMatrixRotationY(camYaw);
-		camRight = XMVector3TransformCoord(DefaultRight, RotateYTempMatrix);
-		camUp = XMVector3TransformCoord(DefaultUp, RotateYTempMatrix);
-		camForward = XMVector3TransformCoord(DefaultForward, RotateYTempMatrix);
-
-		XMVECTOR camPosition;
-		camPosition += moveLeftRight * camRight;
-		camPosition += moveBackForward * camForward;
-
-		moveLeftRight = 0.0f;
-		moveBackForward = 0.0f;
-
-		camTarget = camPosition + camTarget;
-
-		FpsCam.LookAt(camPosition, camTarget, camUp);
-		FpsCam.UpdateViewMatrix();
-		mView = FpsCam.GetView4x4f();
-		mProj = FpsCam.GetProj4x4f();
-		mEyePos = FpsCam.GetPosition3f();*/
-
-}
 
 void ShapesApp::AnimateMaterials(const GameTimer& gt)
 {
