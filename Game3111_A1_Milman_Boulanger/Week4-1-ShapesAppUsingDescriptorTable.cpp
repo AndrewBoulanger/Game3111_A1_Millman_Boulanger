@@ -39,6 +39,17 @@ typedef struct DIMOUSESTATE {
 	BYTE rgbButtons[4];
 } DIMOUSESTATE, * LPDIMOUSESTATE;
 
+struct Box
+{
+	Box() = default;
+	float widthX = 0;
+	float lengthZ = 0;
+	float posX = 0;
+	float posZ = 0;
+	BoundingBox bounds;
+	
+};
+
 // Lightweight structure stores parameters to draw a shape.  This will
 // vary from app-to-app.
 struct RenderItem
@@ -130,6 +141,7 @@ private:
     void BuildMaterials();
     void SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform, std::string material, RenderLayer layer);
     void BuildRenderItems();
+	void buildWaterwall(float xLen, float zLen, float xPos, float zPos);
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
  
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
@@ -137,6 +149,8 @@ private:
 	float GetHillsHeight(float x, float z)const;
 	XMFLOAT3 GetHillsNormal(float x, float z)const;
 	XMFLOAT3 GetTreePosition(float minX, float maxX, float minZ, float maxZ, float treeHeightOffset)const;
+
+	void loadMazeWalls();
 
 private:
 
@@ -190,6 +204,9 @@ private:
     UINT objCBIndex = 0;
 
 	float waterMoveRate = 0.05f;
+
+	std::array<Box, 197> boxMaze;
+	int boxIndex = 0;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -242,6 +259,7 @@ bool ShapesApp::Initialize()
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.02f, 4.0f, 0.15f);
 	
     LoadTextures();
+	loadMazeWalls();
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildShapeGeometry();
@@ -296,6 +314,7 @@ void ShapesApp::Update(const GameTimer& gt)
     UpdateMaterialCBs(gt);
 	UpdateMainPassCB(gt);
 	UpdateWaves(gt);
+
 }
 
 void ShapesApp::Draw(const GameTimer& gt)
@@ -480,8 +499,9 @@ void ShapesApp::AnimateMaterials(const GameTimer& gt)
 	waterMat->NumFramesDirty = gNumFrameResources;
 }
 
+
 void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
-{
+{	
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
 	for(auto& e : mAllRitems)
 	{
@@ -1563,11 +1583,29 @@ void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMAT
     Ritem.IndexCount = Ritem.Geo->DrawArgs[itemType].IndexCount;
     Ritem.StartIndexLocation = Ritem.Geo->DrawArgs[itemType].StartIndexLocation;
     Ritem.BaseVertexLocation = Ritem.Geo->DrawArgs[itemType].BaseVertexLocation;
-    //XMMATRIX inverseTransform = XMMatrixTranspose(transform); //MathHelper::InverseTranspose(transform);
-    //XMStoreFloat4x4(&Ritem.TWorld, inverseTransform);
 
      mRitemLayer[(int)layer].push_back(&Ritem);
    
+}
+
+void ShapesApp::buildWaterwall(float xLen, float zLen, float xPos, float zPos)
+{	
+	auto waterRitem = std::make_unique<RenderItem>();
+			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 40, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
+			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
+			waterRitem->ObjCBIndex = objCBIndex++;
+			waterRitem->Mat = mMaterials["water0"].get();
+			waterRitem->Geo = mGeometries["waterGeo"].get();
+			waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
+			waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+			waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+			mWavesRitem = waterRitem.get();
+
+			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
+			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
+			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+			mAllRitems.push_back(std::move(waterRitem));
 }
 
 void ShapesApp::BuildRenderItems()
@@ -1686,7 +1724,6 @@ void ShapesApp::BuildRenderItems()
             SetRenderItemInfo(*boxRitem, "box", MogulWorld, "stone0", RenderLayer::Opaque);
             mAllRitems.push_back(std::move(boxRitem));
         }
-            
     
     }
     //moat walls / outer walls
@@ -1698,23 +1735,8 @@ void ShapesApp::BuildRenderItems()
 		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
-
-	for (int i = 0; i < 3; i++)
-	{
-		float theta = i * thetaSquareStep;
-		float sRadius = w2 * sinf(theta);
-		float cRadius = w2 * cosf(theta);
-		XMMATRIX texworld = XMMatrixScaling(4.0f, 1.0f, width * 2);
-
-		auto boxRitem = std::make_unique<RenderItem>();
-		XMMATRIX Moatworld = XMMatrixScaling(2.0f, 1.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius * 2, 2.0f, sRadius * 2);
-		XMStoreFloat4x4(&boxRitem.get()->TexTransform, texworld);
-		SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
-		mAllRitems.push_back(std::move(boxRitem));
-
-		if (i == 0 || i == 2) {
-			auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(0.2,81.0, 1.8f) * XMMatrixRotationY(XM_PI) * (XMMatrixTranslation(-20 + (20* i), -1.0f, 0.0f));
+	auto waterRitem = std::make_unique<RenderItem>();
+			XMMATRIX WaterWorld = XMMatrixScaling(0.8, 1, 0.75) * (XMMatrixTranslation(0, -1.0f, 5));
 			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
 			waterRitem->ObjCBIndex = objCBIndex++;
 			waterRitem->Mat = mMaterials["water0"].get();
@@ -1729,9 +1751,29 @@ void ShapesApp::BuildRenderItems()
 			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
 			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
 			mAllRitems.push_back(std::move(waterRitem));
+	
 
+	for (int i = 0; i < 3; i++)
+	{
+		float theta = i * thetaSquareStep;
+		float sRadius = w2 * sinf(theta);
+		float cRadius = w2 * cosf(theta);
+		XMMATRIX texworld = XMMatrixScaling(4.0f, 1.0f, width * 2);
+
+		auto boxRitem = std::make_unique<RenderItem>();
+		XMMATRIX Moatworld = XMMatrixScaling(2.0f, 15.0f, width * 2) * XMMatrixRotationY(theta) * XMMatrixTranslation(cRadius * 2, 2.0f, sRadius * 2);
+		XMStoreFloat4x4(&boxRitem.get()->TexTransform, texworld);
+		SetRenderItemInfo(*boxRitem, "box", Moatworld, "bricks0", RenderLayer::Opaque);
+		mAllRitems.push_back(std::move(boxRitem));
+
+		if (i == 0 || i == 2) {
+
+			buildWaterwall(0.2, 1.2, -20 + (20* i), 0.0f );
+			
 		}
 	}
+
+	
     //smaller, front walls
     for (int i = 0; i < 2; i++)
     {
@@ -1794,6 +1836,35 @@ void ShapesApp::BuildRenderItems()
 	mAllRitems.push_back(std::move(coralSpritesRitem));
 
 
+	float mScale = 7.0f;
+	float normalizer = 18.0f * mScale;
+
+	
+	for(int i = 0; i< 197; i++)
+	{
+		float width; 
+		float length;
+		if(i < 98)
+		{
+			width = boxMaze[i].widthX/normalizer;
+			length = boxMaze[i].lengthZ/mScale;
+		}
+		else
+		{
+			width = boxMaze[i].widthX/mScale;
+			length = boxMaze[i].lengthZ/normalizer;
+		}
+			//build render item
+			buildWaterwall(width, length,  
+				boxMaze[i].posX, boxMaze[i].posZ );
+		
+		//set bounds
+		boxMaze[i].bounds.Center = { boxMaze[i].posX, 19, boxMaze[i].posZ};
+		boxMaze[i].bounds.Extents = {boxMaze[i].widthX * 0.5f, 20.0f, boxMaze[i].lengthZ * 0.5f};
+
+		
+	}
+	
 
 }
 
@@ -1923,3 +1994,23 @@ XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float ma
 
 	return pos;
 }
+
+void ShapesApp::loadMazeWalls()
+{
+	int numWalls = 197;
+	std::ifstream fin("mazeWalls.txt");
+	if(fin.is_open())
+	{
+		for(int i = 0; i < numWalls; i++)
+		{
+			fin >> boxMaze[i].widthX >> boxMaze[i].lengthZ >> boxMaze[i].posX >> boxMaze[i].posZ;
+		}
+	}
+	else
+	{
+		MessageBox(0, L"mazeWalls.txt not found.", 0, 0);
+	}
+	
+}
+
+
