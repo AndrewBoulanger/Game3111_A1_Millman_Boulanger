@@ -49,7 +49,11 @@ struct Box
 	BoundingBox bounds;
 	
 };
-
+typedef enum ContainmentType {
+	DISJOINT,
+	INTERSECTS,
+	CONTAINS
+};
 // Lightweight structure stores parameters to draw a shape.  This will
 // vary from app-to-app.
 struct RenderItem
@@ -153,6 +157,9 @@ private:
 	void loadMazeWalls();
 
 private:
+	bool mFrustumCullingEnabled = true;
+
+	BoundingFrustum FpsFrustNum;
 
     std::vector<std::unique_ptr<FrameResource>> mFrameResources;
     FrameResource* mCurrFrameResource = nullptr;
@@ -256,6 +263,7 @@ bool ShapesApp::Initialize()
 		XMFLOAT3(1.0f, 100.0f, -150.0f),
 		XMFLOAT3(0.0f, 0.0f, 0.0f),
 		XMFLOAT3(0.0f, 1.0f, 0.0f));
+	XMStoreFloat3(&FpsCam.FPSBounds.Center, FpsCam.GetPosition());
 	mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.02f, 4.0f, 0.15f);
 	
     LoadTextures();
@@ -288,12 +296,22 @@ void ShapesApp::OnResize()
 
     // The window resized, so update the aspect ratio and recompute the projection matrix.
 	FpsCam.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+
 }
 
 void ShapesApp::Update(const GameTimer& gt)
 {
-    OnKeyboardInput(gt);
+	bool CollidingWithWalls = false;
 	
+	for (Box e: boxMaze){
+	 if (e.bounds.Intersects(FpsCam.FPSBounds)){
+		 CollidingWithWalls = true;
+		 break;
+	 }
+	 if(!CollidingWithWalls){
+
+		 OnKeyboardInput(gt);
+	 }
 
     // Cycle through the circular frame resource array.
     mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % gNumFrameResources;
@@ -464,8 +482,6 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 	FpsCam.UpdateViewMatrix();
 
 	
-	
-
 	return;
 
 }
@@ -503,6 +519,11 @@ void ShapesApp::AnimateMaterials(const GameTimer& gt)
 void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
 {	
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
+
+	XMMATRIX view = FpsCam.GetView();
+	XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
+
+	auto currInstanceBuffer = mCurrFrameResource->ObjectCB.get();
 	for(auto& e : mAllRitems)
 	{
 		// Only update the cbuffer data if the constants have changed.  
@@ -519,8 +540,20 @@ void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
             XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
 
 
+			XMMATRIX invWorld = XMMatrixInverse(&XMMatrixDeterminant(world), world);
+
+			// View space to the object's local space.
+			XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+
+			// step3: Transform the camera frustum from view space to the object's local space.
+			BoundingFrustum localSpaceFrustum;
+			FpsFrustNum.Transform(localSpaceFrustum, viewToLocal);
+
+			
 			currObjectCB->CopyData(e->ObjCBIndex, objConstants);
 
+			BoundingFrustum localspacefrostnum;
+		
 			// Next FrameResource need to be updated too.
 			e->NumFramesDirty--;
 		}
@@ -1858,7 +1891,7 @@ void ShapesApp::BuildRenderItems()
 			buildWaterwall(width, length,  
 				boxMaze[i].posX, boxMaze[i].posZ );
 		
-		//set bounds
+		BoundingBox bounds;
 		boxMaze[i].bounds.Center = { boxMaze[i].posX, 19, boxMaze[i].posZ};
 		boxMaze[i].bounds.Extents = {boxMaze[i].widthX * 0.5f, 20.0f, boxMaze[i].lengthZ * 0.5f};
 
@@ -2005,6 +2038,7 @@ void ShapesApp::loadMazeWalls()
 		{
 			fin >> boxMaze[i].widthX >> boxMaze[i].lengthZ >> boxMaze[i].posX >> boxMaze[i].posZ;
 		}
+
 	}
 	else
 	{

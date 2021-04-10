@@ -73,7 +73,7 @@ public:
 
 	// After modifying camera position/orientation, call to rebuild the view matrix.
 	void UpdateViewMatrix();
-
+	BoundingBox FPSBounds;
 private:
 
 	// Camera coordinate system with coordinates relative to world space.
