@@ -27,6 +27,11 @@
 
 extern const int gNumFrameResources;
 
+enum moveType
+{
+	walk, strafe, pedestal
+};
+
 inline void d3dSetDebugName(IDXGIObject* obj, const char* name)
 {
 	if (obj)
