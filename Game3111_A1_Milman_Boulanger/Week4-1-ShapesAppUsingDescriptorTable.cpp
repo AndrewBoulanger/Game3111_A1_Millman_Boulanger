@@ -2003,7 +2003,11 @@ void ShapesApp::loadMazeWalls()
 	{
 		for(int i = 0; i < numWalls; i++)
 		{
-			fin >> boxMaze[i].widthX >> boxMaze[i].lengthZ >> boxMaze[i].posX >> boxMaze[i].posZ;
+			fin >> boxMaze[i].widthX >> boxMaze[i].lengthZ  >> boxMaze[i].posX >> boxMaze[i].posZ;
+			boxMaze[i].widthX *=  1.5;
+			boxMaze[i].lengthZ *= 1.5;
+			boxMaze[i].posX *=    1.5;
+			boxMaze[i].posZ *=    1.5;
 		}
 	}
 	else
