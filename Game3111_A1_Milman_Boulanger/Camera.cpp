@@ -298,7 +298,7 @@ void Camera::UpdateViewMatrix()
 	}
 }
 
-DirectX::XMVECTOR Camera::GetNewBounds(float d, moveType type)
+DirectX::XMVECTOR Camera::GetNewPosDifference(float d, moveType type)
 {
 	XMVECTOR s = XMVectorReplicate(d);
 	XMVECTOR dir;
@@ -307,7 +307,10 @@ DirectX::XMVECTOR Camera::GetNewBounds(float d, moveType type)
 	switch (type)
 	{
 	case walk:
-		dir = XMLoadFloat3(&mLook);
+		XMFLOAT3 dirF = mLook;
+		dirF.y = 0.0f;
+		dir = XMLoadFloat3(&dirF);
+
 		break;
 	case strafe:
 		dir = XMLoadFloat3(&mRight);

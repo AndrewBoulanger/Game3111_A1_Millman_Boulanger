@@ -46,8 +46,6 @@ struct Box
 	float lengthZ = 0;
 	float posX = 0;
 	float posZ = 0;
-	BoundingBox bounds;
-	
 };
 
 // Lightweight structure stores parameters to draw a shape.  This will
@@ -84,6 +82,7 @@ struct RenderItem
     UINT IndexCount = 0;
     UINT StartIndexLocation = 0;
     int BaseVertexLocation = 0;
+	BoundingBox bounds;
 };
 
 class ShapesApp : public D3DApp
@@ -126,7 +125,8 @@ private:
 	void UpdateObjectCBs(const GameTimer& gt);
     void UpdateMaterialCBs(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
-	void UpdateWaves(const GameTimer& gt); 
+	void UpdateWaves(const GameTimer& gt);
+	void CameraCollisionCheck(const XMVECTOR np);
 
     void LoadTextures();
     void BuildRootSignature();
@@ -141,7 +141,7 @@ private:
     void BuildMaterials();
     void SetRenderItemInfo(RenderItem &Ritem, std::string itemType, XMMATRIX transform, std::string material, RenderLayer layer);
     void BuildRenderItems();
-	void buildWaterwall(float xLen, float zLen, float xPos, float zPos);
+	void buildWaterwall(float xLen, float zLen, float xPos, float zPos, float halfWidth, float halfHeight);
     void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
  
     std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
@@ -253,7 +253,7 @@ bool ShapesApp::Initialize()
 
     mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	FpsCam.LookAt(
-		XMFLOAT3(1.0f, 100.0f, -150.0f),
+		XMFLOAT3(15.0f, 7.0f, -430.0f),
 		XMFLOAT3(0.0f, 0.0f, 0.0f),
 		XMFLOAT3(0.0f, 1.0f, 0.0f));
 	XMStoreFloat3(&FpsCam.bounds.Center, FpsCam.GetPosition());
@@ -442,85 +442,43 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
  
 void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 {
-	float walkDist = 0;
-	float strafeDist = 0;
-	float pedestalDist = 0;
-
-	float cSpeed = 25.0f;
-	
     if(GetAsyncKeyState('1') & 0x8000)
         mIsWireframe = true;
     else
         mIsWireframe = false;
+	
 	const float dt = gt.DeltaTime();
-	if (GetAsyncKeyState('W') & 0x8000) //most significant bit (MSB) is 1 when key is pressed (1000 000 000 000)
-		walkDist = cSpeed * dt;
+	const float cSpeed = 30.0f * dt;
+	XMVECTOR newPos = FpsCam.GetPosition();
 
-	if (GetAsyncKeyState('S') & 0x8000)
-		walkDist =-cSpeed * dt;
+	//movement input collects changes from the current camera pos
+	if (GetAsyncKeyState('W') & 0x8000) //most significant bit (MSB) is 1 when key is pressed (1000 000 000 000)
+		newPos += FpsCam.GetNewPosDifference(cSpeed, walk);
+
+	if(GetAsyncKeyState('S') & 0x8000)
+		newPos += FpsCam.GetNewPosDifference(-cSpeed, walk);
 
 	if (GetAsyncKeyState('A') & 0x8000)
-		strafeDist =-cSpeed * dt;
+		newPos += FpsCam.GetNewPosDifference(-cSpeed, strafe);
 
 	if (GetAsyncKeyState('D') & 0x8000)
-		strafeDist = cSpeed * dt;
+		newPos += FpsCam.GetNewPosDifference(cSpeed, strafe);
+
+	if (GetAsyncKeyState('Q') & 0x8000)
+		newPos += FpsCam.GetNewPosDifference(-cSpeed, pedestal);
+
+	if (GetAsyncKeyState('E') & 0x8000)
+		newPos += FpsCam.GetNewPosDifference(cSpeed, pedestal);
 	
-	//if (GetAsyncKeyState('E') & 0x8000) //COMMENT THIS (E and Q) OUT WHEN WE DONE BUILDING MAP
-	//	pedestalDist = -cSpeed * dt;
-
-	//if (GetAsyncKeyState('Q') & 0x8000)
-	//	pedestalDist = cSpeed * dt;
-
-	XMVECTOR newPos = FpsCam.GetPosition();
-	if(walkDist != 0)
+	//if no input skip  the collision check
+	if(!XMVector3Equal(newPos, FpsCam.GetPosition()) )
 	{
-		newPos += FpsCam.GetNewBounds(walkDist, walk);
-	}
-	if(strafeDist != 0)
-	{
-		newPos += FpsCam.GetNewBounds(strafeDist, strafe);
-	}
-	//if(strafeDist != 0)
-	//{
-	//	newPos += FpsCam.GetNewBounds(pedestalDist, pedestal);
-	//}
-	if(XMVector3Equal(newPos, XMVectorZero()) )
-	{
-		FpsCam.UpdateViewMatrix();
-		return;
+		CameraCollisionCheck(newPos);
 	}
 
-	
-	BoundingBox newBounds;
-	XMStoreFloat3(&newBounds.Center, newPos);
-	newBounds.Extents = {2.0f, 2.0f, 2.0f};
-	
-	bool noHit = true;
-    for (Box e : boxMaze)
-    {
-		if(e.bounds.Contains(newBounds) != DISJOINT)
-		{
-			noHit = false;
-			break;
-		}
-    }
-
-	if(noHit)
-	{
-		if(walkDist != 0.0f)
-			FpsCam.Walk(walkDist);
-		if(strafeDist != 0.0f)
-			FpsCam.Strafe(strafeDist);
-	/*	if(pedestalDist != 0.0f)
-			FpsCam.Pedestal(pedestalDist);*/
-	}
-
-	
 	FpsCam.UpdateViewMatrix();
 
-	
 	return;
-
 }
  
 
@@ -719,6 +677,28 @@ void ShapesApp::UpdateWaves(const GameTimer& gt)
 
 	// Set the dynamic VB of the wave renderitem to the current frame VB.
 	mWavesRitem->Geo->VertexBufferGPU = currWavesVB->Resource();
+}
+
+void ShapesApp::CameraCollisionCheck(const XMVECTOR np)
+{
+	BoundingBox newBounds;
+	XMStoreFloat3(&newBounds.Center, np);
+	newBounds.Extents = {2.5f, 2.5f, 2.5f};
+
+	//check collision, leave if it happens
+    for(auto& e : mAllRitems)
+    {
+		if(e->bounds.Contains(newBounds) != DISJOINT)
+		{
+			return;
+		}
+    }
+
+	//move camera
+	XMFLOAT3 storeNewPos;
+	XMStoreFloat3(&storeNewPos, np);
+	FpsCam.SetPosition(storeNewPos);
+
 }
 
 void ShapesApp::LoadTextures()
@@ -1008,8 +988,8 @@ void ShapesApp::BuildShapeGeometry()
     GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.0f, 1.0f, 1.0f, 3);
 	GeometryGenerator::MeshData grid = geoGen.CreateGrid(width, depth , 60 , 40);
-	GeometryGenerator::MeshData waterGrid = geoGen.CreateGrid(width * 2, depth * 2, 60 * 2, 40);
-    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 6, depth * 6, 60 * 8 , 40);
+	GeometryGenerator::MeshData waterGrid = geoGen.CreateGrid(width * 2, depth * 2, 60* 2 , 40);
+    GeometryGenerator::MeshData sandDunes = geoGen.CreateGrid(width * 20, depth *20, 60 , 40);
 	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.5f, 2.0f, 20, 20);
 	GeometryGenerator::MeshData cone = geoGen.CreateCone(0.5f, 1.0f, 20, 1);
@@ -1360,36 +1340,44 @@ void ShapesApp::BuildTreeSpritesGeometry()
 	};
 
 	const float m_size = 15.0f;
-	const float m_halfHeight = m_size/3.0f;   //the texture has empty space, 2.4 works better for the actual tree height
+	const float m_halfHeight = m_size/2.4f;   //the texture has empty space, 2.4 works better for the actual tree height
 
-	static const int treeCount = 20;
+	static const int treeCount = 50;
 	std::array<TreeSpriteVertex, treeCount> vertices;
 	//left side trees
-	for(UINT i = 0; i < treeCount*0.3; ++i)
+	for(UINT i = 0; i < treeCount*0.1; ++i)
 	{
 		vertices[i].Pos = GetTreePosition(-80, -55, -70, 80, m_halfHeight);
 		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
 	//right side trees
-	for(UINT i = treeCount*0.3; i < treeCount*0.7; ++i)
+	for(UINT i = treeCount*0.1; i < treeCount*0.2; ++i)
 	{
 		vertices[i].Pos = vertices[i].Pos = GetTreePosition(55, 80, -70, 80, m_halfHeight);
 		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
 	//top side trees
-	for(UINT i = treeCount*0.7; i < treeCount; ++i)
+	for(UINT i = treeCount*0.2; i < treeCount*0.3; ++i)
 	{
 		vertices[i].Pos = vertices[i].Pos = GetTreePosition(-50, 50, 55, 80, m_halfHeight);
 		vertices[i].Size = XMFLOAT2(m_size, m_size);
 	}
-	
-
-	std::array<std::uint16_t, treeCount> indices =
+	for(UINT i = treeCount*0.3; i < treeCount* 0.65; ++i)
 	{
-		0, 1, 2, 3, 4, 5, 6, 7,
-		8, 9, 10, 11, 12, 13, 14, 15,
-		16, 17, 18, 19  
-	};
+		vertices[i].Pos = vertices[i].Pos = GetTreePosition(-300, -150, -400, 20, m_halfHeight);
+		vertices[i].Size = XMFLOAT2(m_size, m_size);
+	}
+	for(UINT i = treeCount*0.65; i < treeCount; ++i)
+	{
+		vertices[i].Pos = vertices[i].Pos = GetTreePosition(150, 300, -400, 20, m_halfHeight);
+		vertices[i].Size = XMFLOAT2(m_size, m_size);
+	}
+	
+	std::array<std::uint16_t, treeCount> indices ={};
+	for(int i = 0;i < treeCount; i++)
+	{
+		indices[i] = i;
+	}
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(TreeSpriteVertex);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
@@ -1646,24 +1634,26 @@ void ShapesApp::SetRenderItemInfo(RenderItem& Ritem, std::string itemType, XMMAT
    
 }
 
-void ShapesApp::buildWaterwall(float xLen, float zLen, float xPos, float zPos)
+void ShapesApp::buildWaterwall(float xLen, float zLen, float xPos, float zPos, float halfWidth, float halfHeight)
 {	
 	auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(xLen, 40, zLen) * (XMMatrixTranslation(xPos, -1.0f, zPos));
-			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
-			waterRitem->ObjCBIndex = objCBIndex++;
-			waterRitem->Mat = mMaterials["water0"].get();
-			waterRitem->Geo = mGeometries["waterGeo"].get();
-			waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-			waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
-			waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-			waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
-			mWavesRitem = waterRitem.get();
+		XMMATRIX WaterWorld = XMMatrixScaling(xLen, 50, zLen) * (XMMatrixTranslation(xPos, -2.0f, zPos));
+		XMStoreFloat4x4(&waterRitem->World, WaterWorld);
+		waterRitem->ObjCBIndex = objCBIndex++;
+		waterRitem->Mat = mMaterials["water0"].get();
+		waterRitem->Geo = mGeometries["waterGeo"].get();
+		waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
+		waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+		waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
 
-			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
-			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
-			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
-			mAllRitems.push_back(std::move(waterRitem));
+		waterRitem->bounds.Center = { xPos, 23, zPos};
+		waterRitem->bounds.Extents = {halfWidth, 25.0f, halfHeight};
+
+		mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
+		XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
+		XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+		mAllRitems.push_back(std::move(waterRitem));
 }
 
 void ShapesApp::BuildRenderItems()
@@ -1784,14 +1774,14 @@ void ShapesApp::BuildRenderItems()
     //moat walls / outer walls
 
 	auto sandDunesRitem = std::make_unique<RenderItem>();
-	XMMATRIX sandDunesWorld = XMMatrixScaling(3.0f, 1.0f, 3.0f) * XMMatrixTranslation(0, -1.0, 0);
+	XMMATRIX sandDunesWorld = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0, -1.0, 0);
 	SetRenderItemInfo(*sandDunesRitem, "sandDunes", sandDunesWorld, "sand0", RenderLayer::Opaque);
 	XMMATRIX sandTexworld = XMMatrixScaling(20, 20, 20 );
 		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
 	auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(0.8, 1, 0.75) * (XMMatrixTranslation(0, -1.0f, 5));
+			XMMATRIX WaterWorld = XMMatrixScaling(0.8, 1, 0.75) * (XMMatrixTranslation(0, -0.8f, 8));
 			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
 			waterRitem->ObjCBIndex = objCBIndex++;
 			waterRitem->Mat = mMaterials["water0"].get();
@@ -1823,7 +1813,7 @@ void ShapesApp::BuildRenderItems()
 
 		if (i == 0 || i == 2) {
 
-			buildWaterwall(0.2, 1.2, -20 + (20* i), -42.0f );
+			buildWaterwall(0.2, 1.2, -20 + (20* i), -42.0f, 11, 70 );
 			
 		}
 	}
@@ -1861,18 +1851,18 @@ void ShapesApp::BuildRenderItems()
     for (int i = 0; i < 2; i++)
     {
         auto wedgeRitem = std::make_unique<RenderItem>();
-        XMMATRIX wedgeWorld = (XMMatrixRotationY(-thetaSquareStep) * XMMatrixScaling(3.0f, 3.0f, 18.0f) * XMMatrixTranslation(0.0f, 4.5f + i * -3, -3.5f + i * -31));
+        XMMATRIX wedgeWorld = (XMMatrixRotationY(-thetaSquareStep) * XMMatrixScaling(3.0f, 3.0f, 18.0f) * XMMatrixTranslation(0.0f, 3.5f + i * -3, -3.5f + i * -31));
         SetRenderItemInfo(*wedgeRitem, "wedge", wedgeWorld, "stone0", RenderLayer::Opaque);
         mAllRitems.push_back(std::move(wedgeRitem));
     }
 
     auto pathRitem = std::make_unique<RenderItem>();
-    XMMATRIX pathWorld = XMMatrixScaling(6.0f, 3.0f, 13.0f)* XMMatrixTranslation( 0.0f, 1.5f, -19.0f);
+    XMMATRIX pathWorld = XMMatrixScaling(6.0f, 3.0f, 13.0f)* XMMatrixTranslation( 0.0f, 0.5f, -19.0f);
     SetRenderItemInfo(*pathRitem, "box", pathWorld, "stone0", RenderLayer::Opaque);
 	 mAllRitems.push_back(std::move(pathRitem));
 
 	 auto boxRitem = std::make_unique<RenderItem>();
-	 XMMATRIX boxWorld = XMMatrixScaling(6.0f, 6.0f, 2.0f)* XMMatrixTranslation( 0.0f, 5.5f, -25.0f);
+	 XMMATRIX boxWorld = XMMatrixScaling(6.0f, 7.0f, 2.0f)* XMMatrixTranslation( 0.0f, 5.0f, -25.0f);
 	SetRenderItemInfo(*boxRitem, "box", boxWorld, "wirefence", RenderLayer::AlphaTested );
 
 	mAllRitems.push_back(std::move(boxRitem));
@@ -1911,12 +1901,7 @@ void ShapesApp::BuildRenderItems()
 		}
 			//build render item
 			buildWaterwall(width, length,  
-				boxMaze[i].posX, boxMaze[i].posZ );
-
-		//set bounds
-		boxMaze[i].bounds.Center = { boxMaze[i].posX, 19, boxMaze[i].posZ};
-		boxMaze[i].bounds.Extents = {boxMaze[i].widthX * 0.5f, 20.0f, boxMaze[i].lengthZ * 0.5f};
-
+				boxMaze[i].posX, boxMaze[i].posZ, boxMaze[i].widthX * 0.5f, boxMaze[i].lengthZ * 0.5f );
 	}
 }
 
@@ -2014,20 +1999,20 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> ShapesApp::GetStaticSamplers()
 
 float ShapesApp::GetHillsHeight(float x, float z)const
 {
-	if(z > 15 || x < -70 || x > 70)
-		return 0.1f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
-	else return 0.01f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));;
+	if(z > 100 || x < -225 || x > 225)
+		return 0.1f*(z*sinf(0.015*x) + x*cosf(0.02*z) + 10);
+	else return 0.001f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
 }
 
 XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
 {
 	// n = (-df/dx, 1, -df/dz)
-	if(z > 15 || x < -70 || x > 70)
+	if(z > 100 || x < -225 || x > 225)
 	{
 	XMFLOAT3 n(
-		-0.03f * z * cosf(0.1f * x) - 0.1f * cosf(0.1f * z),
+		-0.01f * z * cosf(0.015f * x) - 0.1f * cosf(0.02f * z),
 		1.0f,
-		-0.1f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z));
+		-0.1f * sinf(0.015f * x) + 0.01f * x * sinf(0.02f * z));
 
 	XMVECTOR unitNormal = XMVector3Normalize(XMLoadFloat3(&n));
 	XMStoreFloat3(&n, unitNormal);
@@ -2037,9 +2022,9 @@ XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
 	else
 	{
 		XMFLOAT3 n(
-		-0.03f * z * cosf(0.01f * x) - 0.01f * cosf(0.01f * z),
+		-0.0001f * z * cosf(0.1f * x) - 0.001f * cosf(0.1f * z),
 		1.0f,
-		-0.01f * sinf(0.01f * x) + 0.03f * x * sinf(0.01f * z));
+		-0.001f * sinf(0.1f * x) + 0.0001f * x * sinf(0.1f * z));
 
 	XMVECTOR unitNormal = XMVector3Normalize(XMLoadFloat3(&n));
 	XMStoreFloat3(&n, unitNormal);
@@ -2050,8 +2035,7 @@ XMFLOAT3 ShapesApp::GetHillsNormal(float x, float z)const
 
 XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float maxZ, float treeHeightOffset)const
 {
-	XMFLOAT3 pos(0.0f, -1.0f, 0.0f);
-
+	XMFLOAT3 pos(0.0f, 0.0f, 0.0f);
 
 		pos.x = MathHelper::RandF(minX, maxX);
 		pos.z = MathHelper::RandF(minZ, maxZ);
@@ -2059,7 +2043,7 @@ XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float ma
 	
 	
 	// Move tree slightly above land height.
-	pos.y += treeHeightOffset - 4;
+	pos.y += treeHeightOffset - 1;
 
 	return pos;
 }
