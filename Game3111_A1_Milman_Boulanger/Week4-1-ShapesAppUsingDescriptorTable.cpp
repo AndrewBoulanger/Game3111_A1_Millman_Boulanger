@@ -2042,7 +2042,7 @@ XMFLOAT3 ShapesApp::GetTreePosition(float minX, float maxX, float minZ, float ma
 		pos.y = GetHillsHeight(pos.x, pos.z);
 	
 	
-	// Move tree slightly above land height.
+	// Move tree slightly above land height
 	pos.y += treeHeightOffset - 1;
 
 	return pos;
