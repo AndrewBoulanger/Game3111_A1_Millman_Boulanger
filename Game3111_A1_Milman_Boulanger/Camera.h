@@ -76,7 +76,7 @@ public:
 	void UpdateViewMatrix();
 
 	DirectX::BoundingBox bounds;
-DirectX::XMVECTOR GetNewBounds(float d, moveType type);
+DirectX::XMVECTOR GetNewPosDifference(float d, moveType type);
 
 private:
 
