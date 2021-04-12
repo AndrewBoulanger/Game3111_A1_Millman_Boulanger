@@ -1543,7 +1543,7 @@ void ShapesApp::BuildMaterials()
 	sand0->Name = "sand0";
 	sand0->MatCBIndex = 2;
 	sand0->DiffuseSrvHeapIndex = 2;
-	sand0->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	sand0->DiffuseAlbedo = XMFLOAT4(0.7f, 0.7f, 0.7f, 1.0f);
 	sand0->FresnelR0 = XMFLOAT3(0.6f, 0.6f, 0.6f);
 	sand0->Roughness = 0.95f;
 
@@ -1780,8 +1780,10 @@ void ShapesApp::BuildRenderItems()
 		XMStoreFloat4x4(&sandDunesRitem.get()->TexTransform, sandTexworld);
 	mAllRitems.push_back(std::move(sandDunesRitem));
 
+	for(int i = 0; i<2; i++)
+	{
 	auto waterRitem = std::make_unique<RenderItem>();
-			XMMATRIX WaterWorld = XMMatrixScaling(0.8, 1, 0.75) * (XMMatrixTranslation(0, -0.8f, 8));
+			XMMATRIX WaterWorld = XMMatrixScaling(5, 2, 15) * (XMMatrixTranslation(i * 910 - 450, -0.2f, 8));
 			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
 			waterRitem->ObjCBIndex = objCBIndex++;
 			waterRitem->Mat = mMaterials["water0"].get();
@@ -1793,11 +1795,32 @@ void ShapesApp::BuildRenderItems()
 			mWavesRitem = waterRitem.get();
 
 			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
-			XMMATRIX WaterTexworld = XMMatrixScaling(3, 3, 2);
+			XMMATRIX WaterTexworld = XMMatrixScaling(5, 15, 2);
 			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
 			mAllRitems.push_back(std::move(waterRitem));
 	
+	}
+	for(int i = 0; i<2; i++)
+	{
+	auto waterRitem = std::make_unique<RenderItem>();
+			XMMATRIX WaterWorld = XMMatrixScaling(2.19, 2, 4) * (XMMatrixTranslation(5, -0.2f, i * -789 + 135));
+			XMStoreFloat4x4(&waterRitem->World, WaterWorld);
+			waterRitem->ObjCBIndex = objCBIndex++;
+			waterRitem->Mat = mMaterials["water0"].get();
+			waterRitem->Geo = mGeometries["waterGeo"].get();
+			waterRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+			waterRitem->IndexCount = waterRitem->Geo->DrawArgs["grid"].IndexCount;
+			waterRitem->StartIndexLocation = waterRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+			waterRitem->BaseVertexLocation = waterRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+			mWavesRitem = waterRitem.get();
 
+			mRitemLayer[(int)RenderLayer::Transparent].push_back(waterRitem.get());
+			XMMATRIX WaterTexworld = XMMatrixScaling(2, 4, 2);
+			XMStoreFloat4x4(&waterRitem.get()->TexTransform, WaterTexworld);
+			mAllRitems.push_back(std::move(waterRitem));
+	
+	}
+	
 	for (int i = 0; i < 3; i++)
 	{
 		float theta = i * thetaSquareStep;
